@@ -1,0 +1,38 @@
+# Build context is the repo root: docker build -f infra/Dockerfile.web .
+# The web app also deploys cleanly to Vercel; this image is for self-hosting.
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm" PATH="/pnpm:$PATH" COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+WORKDIR /app
+
+FROM base AS build
+# NEXT_PUBLIC_* is inlined into the client bundle at build time, so it must be
+# an ARG. Setting it only as a runtime variable produces an app whose browser
+# code still points at localhost.
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+# Auth.js refuses to build without a secret. This one is a placeholder that
+# never reaches the running app: the real secret arrives as a runtime variable.
+ENV AUTH_SECRET=build-time-placeholder-secret-32chars
+COPY . .
+# Installed without NODE_ENV=production on purpose: that would skip the
+# devDependencies the build itself needs (TypeScript, the Next compiler).
+RUN pnpm install --frozen-lockfile
+# The build, however, must run as production. Building under development
+# produces a broken prerender that the build reports as successful.
+RUN NODE_ENV=production pnpm --filter @shop/shared build \
+ && NODE_ENV=production pnpm --filter @shop/payments build \
+ && NODE_ENV=production pnpm --filter @shop/web build
+
+FROM base AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+# Next's standalone output already contains exactly the dependencies the server
+# needs, traced from the actual imports. Nothing else is copied.
+COPY --from=build /app/apps/web/.next/standalone ./
+COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
+EXPOSE 3000
+# HOSTNAME=0.0.0.0 is required: the standalone server binds localhost by
+# default, and a container that answers only itself fails every health probe.
+ENV HOSTNAME=0.0.0.0
+CMD ["node", "apps/web/server.js"]

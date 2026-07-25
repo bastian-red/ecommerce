@@ -1,0 +1,11 @@
+-- Order numbers come from a database sequence, not from application code.
+--
+-- The alternatives all break under concurrency: MAX(number)+1 races, a random
+-- string collides eventually and has no ordering, and a timestamp collides
+-- within the same millisecond. `nextval` is atomic, never blocks, and never
+-- hands the same value to two transactions, which is exactly the guarantee an
+-- order number needs.
+--
+-- Gaps are expected and fine: a rolled-back checkout consumes a number. An order
+-- number is an identifier, not a count of orders.
+CREATE SEQUENCE IF NOT EXISTS "order_number_seq" START WITH 1001 INCREMENT BY 1;

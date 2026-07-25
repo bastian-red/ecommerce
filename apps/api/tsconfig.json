@@ -1,0 +1,18 @@
+{
+  "extends": "@shop/config/tsconfig.node.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "composite": false,
+    "noUncheckedIndexedAccess": false,
+    // multer is listed explicitly because the base config pins `types` to node,
+    // and FileInterceptor's Express.Multer.File comes from a global augmentation
+    // that is otherwise never loaded.
+    "types": ["node", "multer"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "src/**/*.test.ts"]
+}

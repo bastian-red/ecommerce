@@ -1,0 +1,30 @@
+# Build context is the repo root: docker build -f infra/Dockerfile.api .
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm" PATH="/pnpm:$PATH" COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+# OpenSSL is required by Prisma's query engine.
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+
+FROM base AS build
+COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @shop/db generate \
+ && pnpm --filter @shop/shared --filter @shop/db --filter @shop/payments \
+        --filter @shop/storage --filter @shop/notifications build \
+ && pnpm --filter @shop/api build
+# `pnpm deploy` resolves the workspace links into a self-contained tree and
+# installs production dependencies only. Copying the whole build tree instead
+# would ship every devDependency (TypeScript, Vitest, Nest CLI, the Playwright
+# client) into the runtime image for no reason.
+RUN pnpm --filter @shop/api --prod deploy /prod/api
+
+FROM base AS runner
+ENV NODE_ENV=production
+# Prisma's generated client lives in the store and is copied by `deploy`, but the
+# schema is needed at runtime for `migrate deploy` in the release step.
+COPY --from=build /prod/api /app
+COPY --from=build /app/packages/db/prisma /app/prisma
+WORKDIR /app
+EXPOSE 4000
+CMD ["node", "dist/main.js"]
