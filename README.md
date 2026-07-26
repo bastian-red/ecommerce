@@ -89,6 +89,26 @@ it and the provider's retry is reprocessed rather than swallowed as a duplicate.
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    B[Browser] -->|Server Actions| W[apps/web<br/>Next.js 14]
+    W -->|HS256 service token| A[apps/api<br/>NestJS 10]
+    G[Payment gateway<br/>Stripe or mock] -->|signed webhook| A
+    W -->|redirect to pay| G
+
+    A --> P[(Postgres<br/>CHECK constraints,<br/>dedupe table, ledger)]
+    A --> R[(Redis<br/>carts, rate limits, queues)]
+    A -->|enqueue| R
+    R -->|consume| K[apps/worker<br/>BullMQ]
+    K --> P
+    K --> M[SMTP]
+    K -.->|sweep expired<br/>reservations| P
+```
+
+The web app never talks to the database and never holds a payment key. It holds
+the session, mints a five-minute service token, and calls the API. The API holds
+every invariant.
+
 ```
 apps/web/          Next.js 14 — storefront (ISR) + admin panel
 apps/api/          NestJS 10 — catalog, cart, checkout, webhooks, admin, /health
@@ -254,3 +274,13 @@ Every variable is documented in `.env.example`. The ones that matter:
 
 No secret is ever committed. `gitleaks` runs as a pre-commit hook and as the
 first CI job, and a finding blocks the push.
+
+---
+
+## Deploying
+
+`infra/DEPLOY.md` has the full Railway runbook: the five services, every
+variable, the four settings that break a deploy if you miss them (`PORT` on the
+API, `HOSTNAME=0.0.0.0` on the web server, `NEXT_PUBLIC_*` as a build-time
+argument, and `prisma migrate deploy` as a pre-deploy command), the Stripe
+webhook wiring, and the Updown check.
