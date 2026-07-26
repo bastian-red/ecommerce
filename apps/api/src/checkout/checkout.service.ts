@@ -17,9 +17,9 @@ import { CartService } from '../cart/cart.service';
 import { CONFIG, type AppConfig } from '../config/config';
 import { PAYMENTS } from '../core/core.module';
 import { InventoryService, type StockLine } from '../inventory/inventory.service';
+import { ReservationSweepService } from '../inventory/reservation-sweep.service';
 import { mintOrderAccessToken } from '../orders/order-access-token';
 import { PrismaService } from '../prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
 
 /**
  * Checkout: turn a cart into a PENDING order that holds stock, then hand the
@@ -39,8 +39,8 @@ import { QueueService } from '../queue/queue.service';
  * The cost of that choice is a window where an order holds stock but has no
  * gateway session. That is handled, not ignored: if phase 2 fails the order is
  * cancelled and the stock released immediately, and if the process dies between
- * the phases the reservation TTL means the worker releases it within
- * RESERVATION_TTL_MINUTES. Stock is never stranded, only briefly held.
+ * the phases the reservation carries a TTL that `ReservationSweepService`
+ * reclaims. Stock is never stranded, only briefly held.
  *
  * ## Prices are re-read, never trusted from the client
  *
@@ -57,7 +57,7 @@ export class CheckoutService {
     private readonly prisma: PrismaService,
     private readonly cart: CartService,
     private readonly inventory: InventoryService,
-    private readonly queue: QueueService,
+    private readonly sweep: ReservationSweepService,
     @Inject(PAYMENTS) private readonly gateway: PaymentGateway,
     @Inject(CONFIG) private readonly config: AppConfig,
   ) {}
@@ -71,6 +71,13 @@ export class CheckoutService {
     if (cart.lines.length === 0) {
       throw new BadRequestException(this.error('CART_EMPTY', 'Your cart is empty.'));
     }
+
+    // Reclaim stock from reservations that have outlived their TTL, before
+    // asking whether there is any. This is the lazy half of the expiry
+    // mechanism, and it runs here because this is the only moment a stale
+    // reservation actually costs anything: it is standing between a real
+    // customer and stock they want. It never throws.
+    await this.sweep.sweepQuietly();
 
     const expiresAt = new Date(Date.now() + this.config.reservationTtlMinutes * 60_000);
     const stockLines: StockLine[] = cart.lines.map((line) => ({
@@ -218,11 +225,6 @@ export class CheckoutService {
         currency: created.currency,
       },
     });
-
-    // A delayed job is the fast path for releasing the reservation. It is not
-    // the guarantee: apps/worker also sweeps the orders table on an interval, so
-    // a lost job costs latency, not stranded stock.
-    await this.queue.enqueueRelease(created.id, expiresAt.getTime() - Date.now());
 
     return {
       orderId: created.id,

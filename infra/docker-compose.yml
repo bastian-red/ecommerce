@@ -93,24 +93,6 @@ services:
       timeout: 5s
       retries: 6
 
-  worker:
-    profiles: ['app']
-    build:
-      context: ..
-      dockerfile: infra/Dockerfile.worker
-    container_name: shop-worker
-    restart: unless-stopped
-    env_file: ../.env
-    environment:
-      DATABASE_URL: postgresql://shop:shop@postgres:5432/shop?schema=public
-      REDIS_URL: redis://redis:6379
-      APP_BASE_URL: http://localhost:3000
-      SMTP_HOST: mailhog
-      SMTP_PORT: '1025'
-    depends_on:
-      postgres: { condition: service_healthy }
-      redis: { condition: service_healthy }
-
   web:
     profiles: ['app']
     build:

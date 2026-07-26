@@ -38,6 +38,8 @@ if [[ -f .env ]]; then
 fi
 
 export DATABASE_URL="${DATABASE_URL:-postgresql://shop:shop@localhost:5433/shop?schema=public}"
+# Prisma requires directUrl to be set; without a pooler locally it is the same.
+export DIRECT_DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}"
 export REDIS_URL="${REDIS_URL:-redis://localhost:6380}"
 export AUTH_SECRET="${AUTH_SECRET:-ci-secret-at-least-32-characters-long}"
 export MOCK_WEBHOOK_SECRET="${MOCK_WEBHOOK_SECRET:-mock-webhook-secret-at-least-32-chars}"

@@ -21,7 +21,6 @@
     "@shop/payments": "workspace:*",
     "@shop/shared": "workspace:*",
     "@shop/storage": "workspace:*",
-    "bullmq": "^5.34.5",
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.2",

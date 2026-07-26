@@ -1,11 +1,10 @@
 /**
- * The contract between apps/web, apps/api and apps/worker. One Zod schema per
- * payload, one inferred type beside it, imported by both sides of every call.
+ * The contract between apps/web and apps/api. One Zod schema per payload, one
+ * inferred type beside it, imported by both sides of every call.
  *
  * A schema here is the only place a shape is written down. The API validates
- * request bodies with it through ZodValidationPipe; the web app validates the
- * same forms before it ever hits the network; the worker parses queue jobs with
- * it. Changing a shape in one place is therefore impossible.
+ * request bodies with it through ZodValidationPipe and the web app validates the
+ * same forms before it ever hits the network, so the two cannot drift apart.
  */
 import { z } from 'zod';
 import { passwordSchema } from '../auth/password-strength';
@@ -430,20 +429,10 @@ export const healthSchema = z.object({
 });
 export type Health = z.infer<typeof healthSchema>;
 
-// ---- Worker queue jobs ----
-
-export const releaseExpiredJobSchema = z.object({
-  orderId: idSchema,
-});
-export type ReleaseExpiredJob = z.infer<typeof releaseExpiredJobSchema>;
+// ---- Order emails ----
 
 export const orderEmailJobSchema = z.object({
   orderId: idSchema,
   kind: z.enum(['ORDER_CONFIRMED', 'ORDER_FULFILLED', 'ORDER_CANCELLED']),
 });
 export type OrderEmailJob = z.infer<typeof orderEmailJobSchema>;
-
-export const QUEUE_NAMES = {
-  reservations: 'reservations',
-  emails: 'emails',
-} as const;

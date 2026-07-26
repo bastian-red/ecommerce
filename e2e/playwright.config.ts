@@ -25,6 +25,6 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
   ],
-  // The stack (web, api, worker, postgres, redis) is started before this runs:
+  // The stack (web, api, postgres, redis) is started before this runs:
   // by scripts/e2e.sh locally, by the workflow in CI.
 });

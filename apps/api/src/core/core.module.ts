@@ -2,7 +2,6 @@ import { Global, Module } from '@nestjs/common';
 import { createGateway, type PaymentGateway } from '@shop/payments';
 import { CONFIG, loadConfig, type AppConfig } from '../config/config';
 import { PrismaService } from '../prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
 import { RedisService } from '../redis/redis.service';
 
 export const PAYMENTS = Symbol('PAYMENTS');
@@ -26,16 +25,11 @@ export const PAYMENTS = Symbol('PAYMENTS');
       inject: [CONFIG],
     },
     {
-      provide: QueueService,
-      useFactory: (redis: RedisService) => new QueueService(redis.client),
-      inject: [RedisService],
-    },
-    {
       provide: PAYMENTS,
       useFactory: (config: AppConfig): PaymentGateway => createGateway(config.payments),
       inject: [CONFIG],
     },
   ],
-  exports: [CONFIG, PrismaService, RedisService, QueueService, PAYMENTS],
+  exports: [CONFIG, PrismaService, RedisService, PAYMENTS],
 })
 export class CoreModule {}

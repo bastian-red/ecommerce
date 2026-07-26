@@ -3,8 +3,8 @@ import { Prisma } from '@shop/db';
 import type { ParsedWebhook } from '@shop/payments';
 import { isTerminalOrderStatus } from '@shop/shared';
 import { InventoryService } from '../inventory/inventory.service';
+import { OrderEmailService } from '../notifications/order-email.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
 
 /**
  * What the controller should answer with. `retryable` is the important one: it
@@ -17,6 +17,13 @@ export interface WebhookOutcome {
   duplicate: boolean;
   retryable: boolean;
   detail: string;
+  /**
+   * An order whose confirmation email should go out once the transaction has
+   * committed. It is carried out of the transaction rather than sent inside it,
+   * because SMTP is a network call and holding row locks across one would stall
+   * every other checkout on those variants.
+   */
+  sendConfirmationFor?: string;
 }
 
 /**
@@ -68,11 +75,14 @@ export class WebhooksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly inventory: InventoryService,
-    private readonly queue: QueueService,
+    private readonly email: OrderEmailService,
   ) {}
 
   async handle(provider: string, event: ParsedWebhook): Promise<WebhookOutcome> {
-    const outcome = await this.prisma.$transaction(async (tx) => {
+    // Annotated rather than inferred: the two return sites produce narrower
+    // object literals, and their union would drop the optional
+    // `sendConfirmationFor` that the post-commit dispatch below reads.
+    const outcome: WebhookOutcome = await this.prisma.$transaction(async (tx) => {
       const inserted = await tx.$executeRaw`
         INSERT INTO "webhook_events" ("provider", "event_id", "type", "payload", "order_id", "received_at")
         VALUES (${provider}, ${event.eventId}, ${event.type},
@@ -117,6 +127,15 @@ export class WebhooksService {
     if (outcome.handled && !outcome.duplicate) {
       this.logger.log(`Processed ${provider} ${event.type} ${event.eventId}: ${outcome.detail}`);
     }
+
+    // After the commit, never before, and awaited so a serverless invocation is
+    // not frozen mid-send. `send` swallows its own failures: the money and the
+    // stock have already moved, and an unreachable mail server must not turn a
+    // completed order into a retryable webhook.
+    if (outcome.sendConfirmationFor) {
+      await this.email.send({ orderId: outcome.sendConfirmationFor, kind: 'ORDER_CONFIRMED' });
+    }
+
     return outcome;
   }
 
@@ -205,12 +224,12 @@ export class WebhooksService {
       },
     });
 
-    await this.queue.enqueueOrderEmail({ orderId: order.id, kind: 'ORDER_CONFIRMED' });
-
     return {
       handled: true,
       duplicate: false,
       retryable: false,
+      // Dispatched by `handle` after this transaction commits.
+      sendConfirmationFor: order.id,
       detail: fulfilment.ok
         ? `Order ${order.number} paid and stock fulfilled`
         : `Order ${order.number} paid; stock needs manual review`,

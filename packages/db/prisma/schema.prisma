@@ -16,7 +16,19 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // The application connects through a pooler. On Supabase that means
+  // `?pgbouncer=true&connection_limit=1`: transaction-mode pooling does not
+  // support prepared statements, and a serverless instance must not open more
+  // than one connection or a burst of invocations exhausts the pool.
   url      = env("DATABASE_URL")
+  // Migrations cannot run through a transaction-mode pooler — they need a
+  // session, and they issue statements a pooler will not carry. This is the
+  // direct connection, used only by `prisma migrate` and `db push`.
+  //
+  // Prisma requires it to be set, with no fallback, so locally and in CI it is
+  // simply the same value as DATABASE_URL: there is no pooler in front of a
+  // Postgres container, and pointing both at it keeps one code path.
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 enum Role {

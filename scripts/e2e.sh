@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Run the E2E lane: migrate, reseed, boot api + worker + web, run Playwright,
-# tear everything down.
+# Run the E2E lane: migrate, reseed, boot api + web, run Playwright, tear
+# everything down.
 #
 # The reseed matters. The specs drive stock to zero and create orders, so a
 # second run against a drained database would fail for reasons that have nothing
@@ -17,10 +17,9 @@ cd "$ROOT"
 
 API_PID=""
 WEB_PID=""
-WORKER_PID=""
 
 cleanup() {
-  for pid in "$WEB_PID" "$WORKER_PID" "$API_PID"; do
+  for pid in "$WEB_PID" "$API_PID"; do
     if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
       kill "$pid" 2>/dev/null || true
       wait "$pid" 2>/dev/null || true
@@ -37,6 +36,8 @@ if [[ -f .env ]]; then
 fi
 
 export DATABASE_URL="${DATABASE_URL:-postgresql://shop:shop@localhost:5433/shop?schema=public}"
+# Prisma requires directUrl to be set; without a pooler locally it is the same.
+export DIRECT_DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}"
 export REDIS_URL="${REDIS_URL:-redis://localhost:6380}"
 export AUTH_SECRET="${AUTH_SECRET:-ci-secret-at-least-32-characters-long}"
 export MOCK_WEBHOOK_SECRET="${MOCK_WEBHOOK_SECRET:-mock-webhook-secret-at-least-32-chars}"
@@ -74,11 +75,9 @@ echo "==> Building"
 # broken prerender.
 NODE_ENV=production pnpm build
 
-echo "==> Starting api, worker, web"
+echo "==> Starting api, web"
 node apps/api/dist/main.js >/tmp/shop-e2e-api.log 2>&1 &
 API_PID=$!
-node apps/worker/dist/main.js >/tmp/shop-e2e-worker.log 2>&1 &
-WORKER_PID=$!
 pnpm --filter @shop/web exec next start -p "$WEB_PORT" >/tmp/shop-e2e-web.log 2>&1 &
 WEB_PID=$!
 

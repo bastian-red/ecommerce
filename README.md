@@ -57,9 +57,13 @@ variant's ledger reconstructs its counters from zero; the integration suite
 asserts they match, which is how a write that bypassed the service would be
 caught.
 
-Reservations carry a TTL. `apps/worker` sweeps past-due `PENDING` orders and
-releases them, and that sweep, not the delayed queue job, is the guarantee: a
-lost job costs latency, a database scan cannot miss a row.
+Reservations carry a TTL, reclaimed two ways and by no background process.
+`ReservationSweepService` runs at the start of every checkout — the only moment
+a stale reservation actually costs anything is when it stands between a customer
+and stock they want, and that is exactly when this fires. A `pg_cron` job runs
+the same guarded statements inside the database, so orders still reach `EXPIRED`
+with zero traffic. Neither needs a process to be running, which is what makes
+the whole application deployable to a serverless host for nothing.
 
 ### Idempotent payment webhooks
 
@@ -97,12 +101,9 @@ flowchart LR
     W -->|redirect to pay| G
 
     A --> P[(Postgres<br/>CHECK constraints,<br/>dedupe table, ledger)]
-    A --> R[(Redis<br/>carts, rate limits, queues)]
-    A -->|enqueue| R
-    R -->|consume| K[apps/worker<br/>BullMQ]
-    K --> P
-    K --> M[SMTP]
-    K -.->|sweep expired<br/>reservations| P
+    A --> R[(Redis<br/>carts, rate limits)]
+    A --> M[SMTP]
+    P -.->|pg_cron: sweep<br/>expired reservations| P
 ```
 
 The web app never talks to the database and never holds a payment key. It holds
@@ -112,7 +113,6 @@ every invariant.
 ```
 apps/web/          Next.js 14 — storefront (ISR) + admin panel
 apps/api/          NestJS 10 — catalog, cart, checkout, webhooks, admin, /health
-apps/worker/       BullMQ — reservation sweeper, order emails
 packages/config/   Shared tsconfig (CJS + decorators for Nest, ESM for web)
 packages/db/       Prisma schema, migrations, seed
 packages/shared/   Zod contracts + pure domain logic (pricing, stock maths)
@@ -129,8 +129,8 @@ it is the only place a total is computed, so the cart, the checkout and the
 gateway can never disagree.
 
 **Contracts live in `packages/shared`.** One Zod schema per payload, imported by
-both sides of every call. The API validates with it, the web app validates the
-same forms with it, the worker parses queue jobs with it.
+both sides of every call. The API validates with it and the web app validates
+the same forms with it, so the two cannot drift apart.
 
 ### The pluggable payment gateway
 
@@ -192,14 +192,14 @@ docker compose -f infra/docker-compose.yml --profile app up -d --build
 Three lanes, three budgets.
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test   # gate: 292 unit tests, no I/O, ~2s
-./scripts/integration.sh                   # 23 tests against real Postgres + Redis
+pnpm lint && pnpm typecheck && pnpm test   # gate: 288 unit tests, no I/O, ~2s
+./scripts/integration.sh                   # 29 tests against real Postgres + Redis
 ./scripts/e2e.sh                           # 26 Playwright specs x 2 browsers
 ```
 
 **Gate (Vitest).** Pricing maths, stock predicates, webhook event mapping, HMAC
-signing and verification, upload validation, guards, config parsing. Pure and
-fast; no database, no network.
+signing and verification, upload validation, guards, config parsing, the
+reservation sweep's control flow. Pure and fast; no database, no network.
 
 **Integration.** The two proofs, against a real Postgres, because the properties
 under test *are* Postgres properties: a conditional UPDATE's rowcount, a primary
@@ -213,6 +213,9 @@ Mocking the database here would test the mock's opinion of those.
   concurrently, replayed, delivered out of order, delivered for a terminal order,
   delivered unsigned, delivered tampered. Exactly one `PAID` transition, one
   stock decrement, one `Payment` row.
+- `reservation-sweep.integration.test.ts` — expiry from both triggers. A paid
+  order whose deadline passed is left alone; five concurrent sweeps release each
+  unit once; three expired orders holding the same variant release all three.
 
 **E2E (Playwright).** Browse, search, guest checkout through the mock gateway,
 confirmation, admin product creation, stock adjustment with its ledger row, order
@@ -279,8 +282,8 @@ first CI job, and a finding blocks the push.
 
 ## Deploying
 
-`infra/DEPLOY.md` has the full Railway runbook: the five services, every
-variable, the four settings that break a deploy if you miss them (`PORT` on the
-API, `HOSTNAME=0.0.0.0` on the web server, `NEXT_PUBLIC_*` as a build-time
-argument, and `prisma migrate deploy` as a pre-deploy command), the Stripe
-webhook wiring, and the Updown check.
+Vercel for both apps, Supabase for Postgres and images, Upstash for Redis. Free,
+and with no always-on process anywhere — which is why the queue is gone.
+
+`infra/DEPLOY.md` is the runbook. `infra/PORTFOLIO-STACK.md` is the same pattern
+generalised, because this is the template the rest of the portfolio reuses.

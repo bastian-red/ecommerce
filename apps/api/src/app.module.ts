@@ -19,7 +19,9 @@ import { CoreModule } from './core/core.module';
 import { HealthController } from './health/health.controller';
 import { HealthService } from './health/health.service';
 import { InventoryService } from './inventory/inventory.service';
+import { ReservationSweepService } from './inventory/reservation-sweep.service';
 import { MediaController } from './media/media.controller';
+import { OrderEmailService } from './notifications/order-email.service';
 import { OrdersController } from './orders/orders.controller';
 import { OrdersService } from './orders/orders.service';
 import { RedisService } from './redis/redis.service';
@@ -60,6 +62,8 @@ import { WebhooksService } from './webhooks/webhooks.service';
     CatalogService,
     CartService,
     InventoryService,
+    ReservationSweepService,
+    OrderEmailService,
     CheckoutService,
     WebhooksService,
     OrdersService,
