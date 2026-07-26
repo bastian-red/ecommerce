@@ -27,7 +27,7 @@ compute, a managed Postgres, and a managed Redis.
 |---|---|---|
 | Web + API | Vercel Hobby | No always-on processes. Cron is **once per day**, jittered within the hour. Commercial use prohibited — fine for a portfolio. |
 | Postgres | Supabase | Pauses after 7 days idle. Bundles S3-compatible Storage. |
-| Redis | Upstash | 500K commands/month. Priced per command. |
+| Redis | Upstash | 500K commands/month, 256 MB, 10 GB bandwidth. **One free database per account**, not per project. |
 | Object storage | Supabase Storage or Cloudflare R2 | Both S3-compatible. |
 | Monitoring | Updown | Doubles as the keep-alive that prevents the Supabase pause. |
 
@@ -57,6 +57,12 @@ the only case that matters.
 BullMQ polls Redis continuously even when idle, and Upstash charges per command
 against a 500K monthly allowance. Two queues exhaust it in days; Upstash's own
 documentation recommends a paid plan for BullMQ.
+
+Note also that the free allowance covers **one database for the whole account**.
+Further databases are $0.50/month each, so a portfolio of thirteen projects that
+all want Redis is a real (if small) line item. Prefer designs that do not need
+Redis at all; where it is only carrying rate-limit counters, an in-memory limiter
+is usually the honest choice for a single-instance demo.
 
 So on this stack, work is either done inline or driven from the database. If a
 project genuinely needs a durable queue, that project needs a different host —
@@ -130,6 +136,10 @@ command.
 - `UPDATE ... FROM` applies only one matching row per target row. Aggregate
   before updating, or a sweep touching one variant from three orders decrements
   by one and strands the rest.
+- Upstash gives you the **TCP** endpoint (`rediss://…:6379`) and a **REST**
+  endpoint (`UPSTASH_REDIS_REST_URL` + token). `ioredis` needs the TCP one.
+  Pasting the REST URL into `REDIS_URL` fails at connect time, and the console
+  shows the REST pair more prominently.
 - Docker Compose derives its project name from the containing directory. Every
   project here has an `infra/`, so set `name:` explicitly or two stacks evict
   each other's containers and volumes.
