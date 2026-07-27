@@ -125,7 +125,57 @@ const PRODUCTS: SeedProduct[] = [
   },
 ];
 
+/**
+ * Remove every product this file does not define, and everything hanging off it.
+ *
+ * The E2E suite creates products (`e2e-widget-<timestamp>`) and never removes
+ * them, so without this they accumulate on every run until the admin screens are
+ * mostly test debris. Upserting the seed set alone does not fix that: it can
+ * only add and update, never delete, so the "clean slate" this file promises was
+ * not true.
+ *
+ * Deletion order is dictated by the foreign keys. `OrderItem.variantId` is
+ * `onDelete: Restrict`, so a variant that was ever ordered cannot be dropped
+ * while the order exists. Deleting the order first cascades its items and
+ * payments and nulls the ledger's `orderId`; deleting the product then cascades
+ * its variants, images and their ledger rows.
+ */
+async function pruneNonSeedProducts(): Promise<number> {
+  const doomed = await prisma.product.findMany({
+    where: { slug: { notIn: PRODUCTS.map((product) => product.slug) } },
+    select: { id: true, variants: { select: { id: true } } },
+  });
+  if (doomed.length === 0) return 0;
+
+  const variantIds = doomed.flatMap((product) => product.variants.map((variant) => variant.id));
+
+  if (variantIds.length > 0) {
+    const orderIds = (
+      await prisma.orderItem.findMany({
+        where: { variantId: { in: variantIds } },
+        select: { orderId: true },
+        distinct: ['orderId'],
+      })
+    ).map((item) => item.orderId);
+
+    if (orderIds.length > 0) {
+      // WebhookEvent.orderId is a plain column with no foreign key, so its rows
+      // would otherwise point at orders that no longer exist.
+      await prisma.webhookEvent.deleteMany({ where: { orderId: { in: orderIds } } });
+      await prisma.order.deleteMany({ where: { id: { in: orderIds } } });
+    }
+  }
+
+  await prisma.product.deleteMany({ where: { id: { in: doomed.map((p) => p.id) } } });
+  return doomed.length;
+}
+
 async function main() {
+  const pruned = await pruneNonSeedProducts();
+  if (pruned > 0) {
+    console.log(`Pruned ${pruned} product(s) left behind by earlier test runs.`);
+  }
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@shop.local' },
     update: { role: 'ADMIN' },

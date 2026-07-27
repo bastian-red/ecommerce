@@ -15,6 +15,11 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
   timeout: 60_000,
   expect: { timeout: 10_000 },
+  // The demo spec writes screenshot frames for the README GIF and is slowed
+  // down on purpose, so the normal suite skips it. scripts/demo-gif.sh sets
+  // DEMO=1 to let it through. A CLI --grep cannot override grepInvert, which is
+  // why this is an env check rather than a constant.
+  grepInvert: process.env.DEMO ? undefined : /@demo/,
   use: {
     baseURL: WEB_URL,
     trace: 'on-first-retry',

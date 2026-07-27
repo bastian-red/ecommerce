@@ -14,9 +14,8 @@
 --
 -- Putting it here rather than behind an HTTP endpoint and an external cron
 -- service means no shared secret to leak, no third-party scheduler to depend on,
--- and no network hop between the logic and the rows it operates on. On Supabase
--- it has a useful side effect: a job that touches the database every minute is
--- also what stops a free project being paused for inactivity.
+-- and no network hop between the logic and the rows it operates on. The backstop
+-- travels with the database, so a clone of this repo gets it for free.
 
 CREATE OR REPLACE FUNCTION release_expired_reservations(batch_size integer DEFAULT 100)
 RETURNS TABLE (expired_orders integer, released_lines integer)
@@ -127,8 +126,8 @@ $$;
 COMMENT ON FUNCTION release_expired_reservations(integer) IS
   'Expire past-due PENDING orders and return their reserved stock. Idempotent and safe to run concurrently.';
 
--- Schedule it every minute where pg_cron exists (Supabase enables it; a plain
--- Postgres container in CI does not). The DO block keeps this migration
+-- Schedule it every minute where pg_cron exists (the plain Postgres image used
+-- by docker-compose and CI does not ship it). The DO block keeps this migration
 -- portable: without pg_cron the function is still created and still callable,
 -- which is all the integration tests need, and the API's lazy sweep is
 -- unaffected either way.

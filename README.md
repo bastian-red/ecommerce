@@ -11,6 +11,19 @@ not have:
 Everything else here (catalog, search, cart, checkout, admin panel, stock ledger)
 exists so those two properties have somewhere real to live.
 
+![CI](https://github.com/bastian-red/project002--ecommerce/actions/workflows/ci.yml/badge.svg)
+
+![Demo](assets/demo.gif)
+
+*Guest purchase, recorded from the Playwright suite: browse, full-text search,
+cart, checkout, then the mock gateway delivering the same payment webhook
+**twenty times at once**. The order is charged once, and the stock ledger closes
+on one `RESERVE` and one `FULFILL`.*
+
+Not deployed anywhere, deliberately: the repo is the artefact. It runs locally in
+about a minute (see [Running it](#running-it)), and the GIF above is reproducible
+with `./scripts/demo-gif.sh`.
+
 ---
 
 ## The two hard problems
@@ -62,8 +75,8 @@ Reservations carry a TTL, reclaimed two ways and by no background process.
 a stale reservation actually costs anything is when it stands between a customer
 and stock they want, and that is exactly when this fires. A `pg_cron` job runs
 the same guarded statements inside the database, so orders still reach `EXPIRED`
-with zero traffic. Neither needs a process to be running, which is what makes
-the whole application deployable to a serverless host for nothing.
+with zero traffic. Neither needs a background process to be running, so the
+reservation TTL holds whether or not anything besides the API is up.
 
 ### Idempotent payment webhooks
 
@@ -280,10 +293,14 @@ first CI job, and a finding blocks the push.
 
 ---
 
-## Deploying
+## Not deployed, on purpose
 
-Vercel for both apps, Supabase for Postgres and images, Upstash for Redis. Free,
-and with no always-on process anywhere — which is why the queue is gone.
+This repo is published to GitHub and hosted nowhere. There is no public URL to
+click, and that is a deliberate choice rather than an unfinished step: the code
+is what is being shown, and it reads the same here as it would behind a domain.
 
-`infra/DEPLOY.md` is the runbook. `infra/PORTFOLIO-STACK.md` is the same pattern
-generalised, because this is the template the rest of the portfolio reuses.
+What that does not mean is untested or unrunnable. `docker compose up -d` plus
+`pnpm dev` gives you the whole thing in under a minute, `/health` genuinely
+checks Postgres and Redis and returns 503 when either is down, every service has
+a Dockerfile that CI builds on each push, and the two guarantees above are proven
+by suites you can run yourself in about two minutes.

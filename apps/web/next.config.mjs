@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Standalone output exists for the Docker image, which copies .next/standalone
-  // and runs server.js. Vercel produces its own output format and does not want
-  // it, so it is left off there.
-  ...(process.env.VERCEL ? {} : { output: 'standalone' }),
+  // Docker is the only target: infra/Dockerfile.web copies .next/standalone and
+  // runs server.js, which needs the whole traced dependency set in one place.
+  output: 'standalone',
   reactStrictMode: true,
   transpilePackages: ['@shop/shared'],
   eslint: { ignoreDuringBuilds: true },

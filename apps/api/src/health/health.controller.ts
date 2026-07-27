@@ -4,8 +4,8 @@ import type { Response } from 'express';
 import { HealthService } from './health.service';
 
 /**
- * Never rate limited: Updown polls this on a fixed interval, and a 429 would
- * read as an outage that is entirely our own doing.
+ * Never rate limited: a monitor or an orchestrator polls this on a fixed
+ * interval, and a 429 would read as an outage that is entirely our own doing.
  */
 @SkipThrottle()
 @Controller()
