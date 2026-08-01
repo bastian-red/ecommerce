@@ -7,7 +7,7 @@
  * (plus turbo's own system allowlist). Everything else is stripped, silently.
  *
  * That silence is the whole problem. This repo shipped with six names declared
- * and thirty-five read, so `pnpm dev` started an API with no AUTH_SECRET and a
+ * and thirty-eight read, so `pnpm dev` started an API with no AUTH_SECRET and a
  * web app pointed at a default API_BASE_URL. Nothing failed loudly at the point
  * of the mistake; it surfaced four layers down as ECONNREFUSED. The E2E lane
  * never caught it because scripts/e2e.sh sources .env and launches the apps
@@ -33,7 +33,13 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Where application code lives. Build output and generated clients are not it. */
+/**
+ * Where application code lives. Build output and generated clients are not it,
+ * and neither is e2e/: that package reads BASELINE, DEMO and CI, which are
+ * switches for a test run passed on the command line, not configuration the
+ * application consumes. Folding them in would force them into .env.example and
+ * turbo.json, which would make both files lie about what configures the product.
+ */
 const SOURCE_DIRS = ['apps', 'packages', 'services'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.next', '.turbo', 'generated', 'coverage']);
 const SOURCE_EXT = new Set(['.ts', '.tsx', '.mts', '.mjs', '.js', '.prisma']);
