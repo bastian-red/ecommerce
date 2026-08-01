@@ -1,13 +1,65 @@
 {
   "$schema": "https://turbo.build/schema.json",
+
+  // Turbo 2 defaults to strict env mode: a task's child process sees only the
+  // names below plus turbo's own system allowlist. Everything else is stripped
+  // silently, which is how this repo once started an API with no AUTH_SECRET and
+  // surfaced it four layers down as ECONNREFUSED. The default is kept
+  // deliberately -- switching to "loose" would hide the next under-declaration
+  // instead of fixing this one. scripts/env-contract.mjs keeps these lists
+  // honest against .env.example and against what the source actually reads.
+
+  // Feeds the cache key. Only variables that change what gets BUILT belong here,
+  // and never a secret: turbo hashes the value, so a rotated SMTP password would
+  // invalidate every cached build and put the credential into the hash input.
   "globalEnv": [
+    "API_BASE_URL",
+    "NEXT_PUBLIC_API_BASE_URL",
     "NODE_ENV",
-    "DATABASE_URL",
-    "REDIS_URL",
-    "AUTH_SECRET",
     "PAYMENTS_DRIVER",
     "STORAGE_DRIVER"
   ],
+
+  // Reaches the process without entering the cache key: runtime wiring, ports,
+  // credentials, operational tuning. Changing one of these must not force a
+  // rebuild, but the process must still see it.
+  "globalPassThroughEnv": [
+    "API_PORT",
+    "APP_BASE_URL",
+    "APP_VERSION",
+    "AUTH_SECRET",
+    "AUTH_URL",
+    "CURRENCY",
+    "DATABASE_URL",
+    "DIRECT_DATABASE_URL",
+    "FREE_SHIPPING_THRESHOLD_CENTS",
+    "MAIL_FROM",
+    "MOCK_WEBHOOK_SECRET",
+    "PORT",
+    "RATE_LIMIT_AUTH",
+    "RATE_LIMIT_CHECKOUT",
+    "RATE_LIMIT_GLOBAL",
+    "REDIS_URL",
+    "RESERVATION_TTL_MINUTES",
+    "S3_ACCESS_KEY_ID",
+    "S3_BUCKET",
+    "S3_ENDPOINT",
+    "S3_REGION",
+    "S3_SECRET_ACCESS_KEY",
+    "SHIPPING_FLAT_CENTS",
+    "SMTP_HOST",
+    "SMTP_PASSWORD",
+    "SMTP_PORT",
+    "SMTP_SECURE",
+    "SMTP_USER",
+    "STORAGE_LOCAL_DIR",
+    "STORAGE_PUBLIC_URL",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "TAX_BASIS_POINTS",
+    "WEB_PORT"
+  ],
+
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

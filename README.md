@@ -258,14 +258,33 @@ test asserts the glyphs differ.
 
 ## Tests
 
-Four lanes, four budgets.
+Five lanes, five budgets.
 
 ```bash
 pnpm lint && pnpm typecheck && pnpm test   # gate: unit tests, no I/O, ~2s (incl. contrast + identity)
+node scripts/env-contract.mjs              # gate: turbo.json vs .env.example vs what the code reads
+./scripts/dev-smoke.sh                     # boots `pnpm dev` and asserts the shop actually renders
 ./scripts/integration.sh                   # 29 tests against real Postgres + Redis
 ./scripts/e2e.sh                           # Playwright specs x 2 browsers, incl. axe
 ./scripts/a11y-baseline.sh                 # records axe findings to a file instead of failing
 ```
+
+**Environment contract (`scripts/env-contract.mjs`).** Turborepo 2 runs tasks in strict environment
+mode: a task's child process sees only the names declared in `turbo.json`, and everything else is
+stripped without a warning. This repo shipped with six names declared and thirty-eight read, so the
+documented `pnpm dev` started an API with no `AUTH_SECRET` — it died at boot, and every server render
+then failed with `ECONNREFUSED` against a dead `:4000`. The symptom looked like a slow page. The check
+asserts four things: everything the source reads is declared, everything `.env.example` documents is
+declared, every declared name is used, and every documented name is actually read. That last one is
+how `SWEEP_BATCH_SIZE` was found documenting a knob that had never existed.
+
+**Dev smoke (`scripts/dev-smoke.sh`).** The contract check proves the names are declared; it cannot
+prove they arrive. This boots the real `pnpm dev` and asserts `/health` reports Postgres and Redis
+green and that `/` renders actual product cards — a status-code check alone would have passed on the
+broken version, which served a 200 error page. It launches with every name in `.env` stripped from the
+environment, so the app can only be configured by the repo, the way a fresh clone is. `integration.sh`
+and `e2e.sh` cannot cover this: both source `.env` themselves and start the apps directly, never
+through turbo.
 
 **Accessibility (axe-core).** `e2e/tests/a11y.spec.ts` runs axe over 14 routes across both surfaces
 in both colour schemes and asserts zero WCAG 2.1 A/AA violations. Taken before the redesign, the same

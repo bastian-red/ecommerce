@@ -47,6 +47,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:generate
+      # Turbo runs in strict env mode, so a variable missing from turbo.json is
+      # invisible to the app at runtime. Free and instant, so it runs first.
+      - run: node scripts/env-contract.mjs
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -132,6 +135,55 @@ jobs:
           name: playwright-report
           path: e2e/playwright-report
           retention-days: 7
+
+  # Covers the command the README tells a reader to run, which no other job does:
+  # integration.sh and e2e.sh both source .env themselves and launch the apps
+  # directly, never through turbo. `pnpm dev` was broken for months underneath a
+  # fully green pipeline because of exactly that gap.
+  #
+  # This job deliberately declares NO env: block and does not inherit useful
+  # values from the workflow-level one, because dev-smoke.sh strips every name
+  # .env defines from the child environment. The app has to get its configuration
+  # from the repo, the way a fresh clone does.
+  dev-smoke:
+    name: pnpm dev serves the app
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shop
+          POSTGRES_PASSWORD: shop
+          POSTGRES_DB: shop
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U shop -d shop"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6380:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Verbatim from README.md, "Running it". If these lines stop producing a
+      # working app, the README is wrong and this job says so.
+      - name: Set up .env the way the README says
+        run: |
+          cp .env.example .env
+          sed -i "s|^AUTH_SECRET=|AUTH_SECRET=$(openssl rand -base64 32)|" .env
+      - name: Migrate and seed
+        run: |
+          set -a && . ./.env && set +a
+          pnpm db:generate && pnpm db:deploy && pnpm db:seed
+      - run: ./scripts/dev-smoke.sh
 
   docker:
     name: Docker images build
