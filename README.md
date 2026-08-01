@@ -11,7 +11,7 @@ not have:
 Everything else here (catalog, search, cart, checkout, admin panel, stock ledger)
 exists so those two properties have somewhere real to live.
 
-![CI](https://github.com/bastian-red/project002--ecommerce/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/bastian-red/ecommerce/actions/workflows/ci.yml/badge.svg)
 
 ![Demo](assets/demo.gif)
 
