@@ -1,7 +1,8 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { auth } from '../../auth';
+import { AdminNav } from '@/components/admin-nav';
+import { AdminBar } from '@/components/admin-bar';
 
 /**
  * The admin gate.
@@ -10,6 +11,11 @@ import { auth } from '../../auth';
  * be added later that forgets it. It is not the only check: the API's RolesGuard
  * refuses non-admin tokens independently, so this layout is a redirect for the
  * user's benefit, not the security boundary. A UI-only guard is a suggestion.
+ *
+ * `data-surface="admin"` scopes app/admin.css over this whole subtree: cool
+ * slate instead of warm paper, a tighter type scale, denser table rows. An
+ * operator who cannot tell at a glance which surface they are on will
+ * eventually edit live inventory believing they are browsing.
  */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -17,16 +23,15 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (session.user.role !== 'ADMIN') redirect('/');
 
   return (
-    <main className="container-wide">
-      <h1>Admin</h1>
-      <nav className="admin-nav">
-        <Link href="/admin">Overview</Link>
-        <Link href="/admin/products">Products</Link>
-        <Link href="/admin/stock">Stock</Link>
-        <Link href="/admin/orders">Orders</Link>
-        <Link href="/admin/ledger">Stock ledger</Link>
-      </nav>
-      {children}
-    </main>
+    <div data-surface="admin">
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <AdminBar />
+      <main className="container-wide" id="main">
+        <AdminNav />
+        {children}
+      </main>
+    </div>
   );
 }

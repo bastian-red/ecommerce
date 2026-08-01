@@ -68,7 +68,7 @@ export function AddToCart({ variants: initial, slug }: { variants: ProductVarian
           return (
             <label
               key={candidate.id}
-              className={`variant${out ? ' out' : ''}`}
+              className={`variant${out ? ' out' : ''}${selected === candidate.id ? ' selected' : ''}`}
               data-testid="variant-option"
               data-sku={candidate.sku}
             >
@@ -98,16 +98,22 @@ export function AddToCart({ variants: initial, slug }: { variants: ProductVarian
         })}
       </div>
 
-      <div className="row">
+      <div className="row" style={{ marginTop: 'var(--s-4)' }}>
         <div className="qty">
-          <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Decrease quantity">
-            -
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            aria-label="Decrease quantity"
+          >
+            &minus;
           </button>
-          <span className="value" data-testid="quantity">
+          <span className="value num" data-testid="quantity" aria-live="polite">
             {quantity}
           </span>
           <button
             type="button"
+            className="btn"
             onClick={() => setQuantity((q) => Math.min(max || 1, q + 1))}
             aria-label="Increase quantity"
           >
@@ -116,7 +122,7 @@ export function AddToCart({ variants: initial, slug }: { variants: ProductVarian
         </div>
         <button
           type="button"
-          className="btn btn-primary"
+          className="btn btn-primary grow"
           onClick={submit}
           disabled={soldOut || pending}
           data-testid="add-to-cart"

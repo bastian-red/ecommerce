@@ -1,7 +1,7 @@
 import { productQuerySchema, type Category, type ProductList } from '@shop/shared';
 import Link from 'next/link';
-import { ProductCard } from '../../components/product-card';
-import { publicApiFetch } from '../../lib/api';
+import { ProductCard } from '@/components/product-card';
+import { publicApiFetch } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 

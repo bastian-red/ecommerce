@@ -1,7 +1,7 @@
 import { formatMoney, type Cart } from '@shop/shared';
 import Link from 'next/link';
-import { CartLineControls } from '../../components/cart-line-controls';
-import { cartApiFetch, getCartId } from '../../lib/api';
+import { CartLineControls } from '@/components/cart-line-controls';
+import { cartApiFetch, getCartId } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,41 +52,53 @@ export default async function CartPage({
           </div>
         </>
       ) : (
-        <>
-          {cart.lines.map((line) => (
-            <div className="cart-line" key={line.variantId} data-testid="cart-line" data-sku={line.sku}>
-              {line.imageUrl ? (
-                <img className="thumb" src={line.imageUrl} alt={line.productTitle} />
-              ) : (
-                <span className="thumb" aria-hidden="true" />
-              )}
-              <div>
-                <Link href={`/products/${line.productSlug}`}>
-                  <strong>{line.productTitle}</strong>
-                </Link>
-                <div className="product-meta">
-                  {line.variantName} · {line.sku} · {formatMoney(line.unitPriceCents)} each
-                </div>
-                {line.exceedsStock && (
-                  <div className="error" data-testid="line-stock-error">
-                    Only {line.availableStock} left
-                  </div>
+        // Lines left, totals right and sticky. The total is the number a
+        // shopper checks after every quantity change, and putting it at the
+        // bottom of a long cart means scrolling to see the consequence of the
+        // click they just made.
+        <div className="cart-layout">
+          <div>
+            {cart.lines.map((line) => (
+              <div
+                className="cart-line"
+                key={line.variantId}
+                data-testid="cart-line"
+                data-sku={line.sku}
+              >
+                {line.imageUrl ? (
+                  <img className="thumb" src={line.imageUrl} alt={line.productTitle} />
+                ) : (
+                  <span className="thumb" aria-hidden="true" />
                 )}
-                <div style={{ marginTop: 8 }}>
-                  <CartLineControls
-                    variantId={line.variantId}
-                    quantity={line.quantity}
-                    max={Math.max(line.availableStock, 1)}
-                  />
+                <div>
+                  <Link href={`/products/${line.productSlug}`}>
+                    <strong>{line.productTitle}</strong>
+                  </Link>
+                  <div className="product-meta">
+                    {line.variantName} · <span className="mono">{line.sku}</span> ·{' '}
+                    {formatMoney(line.unitPriceCents)} each
+                  </div>
+                  {line.exceedsStock && (
+                    <div className="error" data-testid="line-stock-error" role="alert">
+                      Only {line.availableStock} left
+                    </div>
+                  )}
+                  <div style={{ marginTop: 'var(--s-2)' }}>
+                    <CartLineControls
+                      variantId={line.variantId}
+                      quantity={line.quantity}
+                      max={Math.max(line.availableStock, 1)}
+                    />
+                  </div>
                 </div>
+                <span className="price" data-testid="line-total">
+                  {formatMoney(line.lineTotalCents)}
+                </span>
               </div>
-              <span className="price-sm" data-testid="line-total">
-                {formatMoney(line.lineTotalCents)}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
 
-          <div className="summary" style={{ marginTop: 24 }}>
+          <div className="summary">
             <div className="summary-row">
               <span>Subtotal</span>
               <span data-testid="subtotal">{formatMoney(cart.subtotalCents)}</span>
@@ -105,19 +117,28 @@ export default async function CartPage({
               <span>Total</span>
               <span data-testid="total">{formatMoney(cart.totalCents)}</span>
             </div>
-            <div className="row" style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 'var(--s-5)' }}>
               {cart.hasStockProblem ? (
-                <button type="button" className="btn" disabled data-testid="checkout-blocked">
+                <button
+                  type="button"
+                  className="btn btn-block"
+                  disabled
+                  data-testid="checkout-blocked"
+                >
                   Fix your cart to continue
                 </button>
               ) : (
-                <Link href="/checkout" className="btn btn-primary" data-testid="go-to-checkout">
+                <Link
+                  href="/checkout"
+                  className="btn btn-primary btn-block"
+                  data-testid="go-to-checkout"
+                >
                   Checkout
                 </Link>
               )}
             </div>
           </div>
-        </>
+        </div>
       )}
     </main>
   );

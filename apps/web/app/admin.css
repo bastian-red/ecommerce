@@ -1,0 +1,268 @@
+/*
+ * Admin — the operator's surface.
+ *
+ * Everything here follows from one observation: nobody browses an admin panel.
+ * They arrive with a question ("did order 4192 ship", "how many mediums are
+ * left") and they want it answered in one screen without scrolling. That gives
+ * three requirements the storefront language actively works against.
+ *
+ * 1. Density over air. The storefront's editorial whitespace means fewer rows
+ *    on screen, and comparing two numbers that will not fit together is the
+ *    single most common thing an operator does. Rows are tighter, type is
+ *    smaller, and the page runs full width.
+ *
+ * 2. A different temperature. Warm paper says "shop"; this is not the shop, and
+ *    an operator who cannot tell at a glance which one they are looking at will
+ *    eventually edit live inventory thinking they are browsing. Cool slate is
+ *    the cheapest possible way to make that mistake impossible.
+ *
+ * 3. Numbers that line up. Every quantity, price and identifier is monospace or
+ *    tabular and right-aligned, because a column of digits is only scannable if
+ *    the digits are the same width and share an edge.
+ *
+ * This file only overrides. Spacing rhythm, type scale, motion, focus and the
+ * accessibility contract all come from globals.css, so the two surfaces still
+ * belong to one product.
+ */
+
+[data-surface='admin'] {
+  --radius: 4px;
+
+  /* Cool slate, in place of the storefront's warm paper. */
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eceff3;
+  --border: #dde2e8;
+  --border-strong: #7d8794;
+  --text: #101418;
+  --muted: #4d5661;
+
+  /* Blue, not oxblood. The storefront's accent is a brand colour; this one is
+     a "here is the control" colour, and it must not read as retail. */
+  --accent: #1f6feb;
+  --accent-ink: #1257c7;
+  --on-accent: #ffffff;
+  --accent-wash: #e8f0fe;
+
+  --state-ok: #146c2e;
+  --state-warn: #8a5300;
+  --state-err: #b3261e;
+
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  /* One step down from the storefront: 13px against 15px. */
+  font-size: var(--t-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-surface='admin'] {
+    --bg: #0d1117;
+    --surface: #151b23;
+    --surface-2: #1c232c;
+    --border: #262d36;
+    --border-strong: #68727e;
+    --text: #f0f3f6;
+    --muted: #9aa4b0;
+
+    --accent: #58a6ff;
+    --accent-ink: #79b8ff;
+    --on-accent: #0d1117;
+    --accent-wash: #16243a;
+
+    --state-ok: #3fb950;
+    --state-warn: #d29922;
+    --state-err: #f85149;
+  }
+}
+
+/* ==========================================================================
+   Chrome
+   ========================================================================== */
+
+/* Headings drop the serif. A display face on a stock table is decoration on a
+   spreadsheet.
+   Tracking goes back to normal, too: --track-tight is tuned for the
+   storefront's 38-76px serif, and at 17px in a grotesque it closes the word
+   space enough that "Stock ledger" reads as one word. */
+[data-surface='admin'] h1,
+[data-surface='admin'] h2,
+[data-surface='admin'] h3 {
+  font-family: var(--ff-ui);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+[data-surface='admin'] h1 {
+  font-size: var(--t-lg);
+  margin-bottom: var(--s-5);
+}
+[data-surface='admin'] h2 {
+  font-size: var(--t-md);
+  margin: var(--s-8) 0 var(--s-4);
+}
+[data-surface='admin'] h3 {
+  font-size: var(--t-base);
+}
+
+[data-surface='admin'] .container,
+[data-surface='admin'] .container-wide {
+  max-width: 1440px;
+  padding: var(--s-6) var(--s-6) var(--s-16);
+}
+
+[data-surface='admin'] .nav {
+  background: var(--surface);
+  padding: var(--s-3) var(--s-6);
+}
+[data-surface='admin'] .nav .brand {
+  font-family: var(--ff-ui);
+  font-weight: 600;
+  font-size: var(--t-base);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+/* A visible label, not a subtle tint. The whole point is that nobody can
+   mistake this for the storefront. */
+[data-surface='admin'] .nav .brand::after {
+  content: 'Admin';
+  font-family: var(--ff-mono);
+  font-size: var(--t-2xs);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: var(--radius);
+  padding: 2px var(--s-2);
+}
+
+.admin-nav {
+  display: flex;
+  gap: var(--s-1);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--s-6);
+  flex-wrap: wrap;
+}
+.admin-nav a {
+  padding: var(--s-2) var(--s-3);
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-size: var(--t-sm);
+}
+.admin-nav a:hover {
+  color: var(--text);
+}
+.admin-nav a[aria-current='page'] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Tables — the reason this surface exists
+   ========================================================================== */
+
+[data-surface='admin'] table {
+  font-size: var(--t-sm);
+}
+[data-surface='admin'] th {
+  font-size: var(--t-2xs);
+  font-family: var(--ff-mono);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  padding: var(--s-2) var(--s-3);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+[data-surface='admin'] td {
+  padding: var(--s-2) var(--s-3);
+  vertical-align: middle;
+}
+[data-surface='admin'] tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* Identifiers are compared character by character, never read as words. */
+[data-surface='admin'] .sku,
+[data-surface='admin'] .order-id {
+  font-family: var(--ff-mono);
+  font-size: var(--t-xs);
+}
+
+[data-surface='admin'] .card {
+  border-radius: var(--radius);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-1);
+}
+
+[data-surface='admin'] .btn {
+  min-height: 34px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius);
+  font-size: var(--t-sm);
+}
+[data-surface='admin'] .btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+[data-surface='admin'] .btn-primary:hover:not(:disabled) {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+  color: var(--on-accent);
+}
+
+/* Controls inside a table row are row-height, not form-height. */
+[data-surface='admin'] td input,
+[data-surface='admin'] td select {
+  min-height: 34px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--radius);
+  font-size: var(--t-sm);
+  width: auto;
+}
+[data-surface='admin'] td input[type='number'] {
+  width: 88px;
+  text-align: right;
+}
+
+[data-surface='admin'] .badge {
+  border-radius: var(--radius-pill);
+  padding: 1px var(--s-2);
+}
+
+/* ==========================================================================
+   Stat tiles
+   ========================================================================== */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--s-3);
+  margin-bottom: var(--s-6);
+}
+.stat {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: var(--s-4);
+}
+.stat dt {
+  font-family: var(--ff-mono);
+  font-size: var(--t-2xs);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--s-2);
+}
+.stat dd {
+  margin: 0;
+  font-size: var(--t-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}

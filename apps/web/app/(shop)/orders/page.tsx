@@ -1,8 +1,8 @@
 import { formatMoney, type OrderList, type OrderStatus } from '@shop/shared';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { auth } from '../../auth';
-import { apiFetch } from '../../lib/api';
+import { auth } from '@/auth';
+import { apiFetch } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 

@@ -2,7 +2,7 @@
 
 import { buildMockWebhookRequest, SIGNATURE_HEADER, type MockEvent } from '@shop/payments/mock';
 import { randomUUID } from 'node:crypto';
-import { API_BASE_URL } from '../../../lib/config';
+import { API_BASE_URL } from '@/lib/config';
 
 /**
  * The mock gateway's callback. This is what a real provider's webhook sender

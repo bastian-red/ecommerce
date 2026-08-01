@@ -1,9 +1,9 @@
 import { formatMoney, type Order, type OrderStatus } from '@shop/shared';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { auth } from '../../../auth';
-import { ClearCartOnPaid } from '../../../components/clear-cart-on-paid';
-import { ApiError, apiFetch, publicApiFetch } from '../../../lib/api';
+import { auth } from '@/auth';
+import { ClearCartOnPaid } from '@/components/clear-cart-on-paid';
+import { ApiError, apiFetch, publicApiFetch } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 

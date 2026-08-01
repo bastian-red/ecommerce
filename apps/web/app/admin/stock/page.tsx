@@ -9,7 +9,7 @@ export default async function AdminStockPage() {
 
   return (
     <>
-      <h2>Stock</h2>
+      <h1>Stock</h1>
       <p className="muted">
         On hand is physical inventory. Reserved is the part of it promised to open orders.
         Available is what a new order can still claim. Every change here writes a ledger row.

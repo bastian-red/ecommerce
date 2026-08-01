@@ -1,7 +1,7 @@
 import type { Category, ProductList } from '@shop/shared';
 import Link from 'next/link';
-import { ProductCard } from '../components/product-card';
-import { cachedApiFetch } from '../lib/api';
+import { ProductCard } from '@/components/product-card';
+import { cachedApiFetch } from '@/lib/api';
 
 // ISR: the home page is the most-hit and least-volatile page in the store. It is
 // rebuilt at most once a minute, and immediately whenever an admin edit calls

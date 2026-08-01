@@ -200,15 +200,78 @@ docker compose -f infra/docker-compose.yml --profile app up -d --build
 
 ---
 
+## Design — two surfaces, on purpose
+
+The product has two audiences whose needs point in opposite directions.
+
+A **shopper** is looking at a photograph, deciding whether they want a thing. That is a slow, visual,
+slightly indulgent act, and every pixel the interface spends on itself is a pixel taken from the
+product. An **operator** is reading a stock ledger, answering "did that order ship" and "how many are
+left". That is fast, textual and comparative, and editorial whitespace actively hurts it: fewer rows
+on screen means more scrolling between two numbers they are trying to compare.
+
+One visual language cannot serve both, so there are two scopes sharing one set of primitives:
+
+| | Storefront (`:root`) | Console (`[data-surface="admin"]`) |
+|---|---|---|
+| Canvas | warm paper `#fffdfa` / `#14120e` | cool slate `#f6f7f9` / `#0d1117` |
+| Accent | oxblood `#7a2e2e` | blue `#1f6feb` |
+| Radius | 2px, nearly square | 4px |
+| Body | 15px | 13px, tighter rows |
+| Titles & prices | Instrument Serif | Archivo, no serif anywhere |
+| Identifiers | — | IBM Plex Mono, right-aligned |
+
+`apps/web/app/globals.css` holds the primitives and the storefront; `apps/web/app/admin.css` only
+overrides. Spacing rhythm, type scale, motion, focus treatment and the accessibility contract are
+shared, so the two still read as one product.
+
+**The nav moved out of the root layout.** It used to be global, which painted the warm editorial bar
+across the top of the cool console — the two surfaces disagreeing in the first 60 pixels of every
+page. Storefront routes now live under the `app/(shop)/` route group with their own layout, and
+`app/admin/layout.tsx` owns its own bar. Route groups do not appear in the URL, so no route, link or
+test selector changed.
+
+**The card around a product is gone.** No border, no background, no shadow — on a page whose subject
+is the product, each of those is chrome competing with the thing being sold. The thumb holds a fixed
+4:5 ratio so a slow image never reflows the grid under a shopper's cursor.
+
+### The colours are tested, not eyeballed
+
+`apps/web/lib/contrast.test.ts` parses the real stylesheets, pulls **four** palettes out of them
+(storefront and console x light and dark) and fails the commit if any foreground/background pair
+drops below WCAG AA — 133 assertions. Four rather than two because a value that clears AA on warm
+paper can fail on cool slate, and nothing else would catch it.
+
+It also checks the claim this whole section rests on: that the two canvases have opposite warmth
+(red channel minus blue) and different accents. "Warm paper vs cool slate" is a statement about hex
+values, so it is measured rather than asserted.
+
+`apps/web/lib/identity.test.ts` pins both palettes, the three typefaces and the two radii, so this
+app cannot quietly drift back into looking like a sibling repo.
+
+Status colours cannot separate in greyscale — in dark mode every state colour must clear 4.5:1
+against a near-black canvas, which forces paid, pending and cancelled into one narrow luminance band.
+So colour is not the signal: each pill carries a distinct glyph (`✓ ○ ✕`) and its own word, and the
+test asserts the glyphs differ.
+
+---
+
 ## Tests
 
-Three lanes, three budgets.
+Four lanes, four budgets.
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test   # gate: 288 unit tests, no I/O, ~2s
+pnpm lint && pnpm typecheck && pnpm test   # gate: unit tests, no I/O, ~2s (incl. contrast + identity)
 ./scripts/integration.sh                   # 29 tests against real Postgres + Redis
-./scripts/e2e.sh                           # 26 Playwright specs x 2 browsers
+./scripts/e2e.sh                           # Playwright specs x 2 browsers, incl. axe
+./scripts/a11y-baseline.sh                 # records axe findings to a file instead of failing
 ```
+
+**Accessibility (axe-core).** `e2e/tests/a11y.spec.ts` runs axe over 14 routes across both surfaces
+in both colour schemes and asserts zero WCAG 2.1 A/AA violations. Taken before the redesign, the same
+spec found 54 failing nodes: 46 image-placeholder and variant-label nodes below the contrast floor,
+and 8 unnamed status `<select>`s in the admin product table. It is now zero and the spec keeps it
+there.
 
 **Gate (Vitest).** Pricing maths, stock predicates, webhook event mapping, HMAC
 signing and verification, upload validation, guards, config parsing, the

@@ -16,7 +16,7 @@ export default async function AdminLedgerPage() {
 
   return (
     <>
-      <h2>Stock ledger</h2>
+      <h1>Stock ledger</h1>
       <p className="muted">
         Append-only, one row per movement. Summing on-hand deltas for a variant reconstructs its
         stock from zero, which is how a lost update would be caught.

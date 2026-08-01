@@ -13,7 +13,7 @@ export default async function AdminProductsPage() {
 
   return (
     <>
-      <h2>Products</h2>
+      <h1>Products</h1>
       <div className="shop-layout" style={{ gridTemplateColumns: '1fr 340px' }}>
         <section>
           <table>

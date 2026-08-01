@@ -105,6 +105,11 @@ export function StatusSelect({ product }: { product: Product }) {
     <select
       value={product.status}
       disabled={pending}
+      // One select per row, so a visible <label> would repeat "Status" down the
+      // whole table. The name has to say which product it belongs to anyway:
+      // "Status" alone tells a screen-reader user nothing about which of eight
+      // rows they are on. The axe baseline flagged all eight as unnamed.
+      aria-label={`Status for ${product.title}`}
       data-testid={`status-${product.slug}`}
       onChange={(event) => {
         const status = event.target.value as 'DRAFT' | 'ACTIVE' | 'ARCHIVED';

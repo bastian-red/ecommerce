@@ -22,26 +22,32 @@ export default async function AdminOverviewPage() {
 
   return (
     <>
-      <div className="grid">
-        <div className="card">
-          <h3>Awaiting fulfilment</h3>
-          <p className="price" data-testid="stat-awaiting">{paid.length}</p>
-        </div>
-        <div className="card">
-          <h3>Revenue (paid + fulfilled)</h3>
-          <p className="price" data-testid="stat-revenue">{formatMoney(revenueCents)}</p>
-        </div>
-        <div className="card">
-          <h3>Units held by open orders</h3>
-          <p className="price" data-testid="stat-held">{held}</p>
-        </div>
-        <div className="card">
-          <h3>Variants out of stock</h3>
-          <p className="price" data-testid="stat-oos">{outOfStock.length}</p>
-        </div>
-      </div>
+      <h1>Overview</h1>
 
-      <h2 style={{ marginTop: 32 }}>Needs attention</h2>
+      {/* A description list, not four cards with headings in them. These are
+          label/value pairs, which is what <dl> is for, and it means a screen
+          reader reads "Awaiting fulfilment, 3" instead of announcing four
+          same-level headings with orphaned numbers under them. */}
+      <dl className="stats">
+        <div className="stat">
+          <dt>Awaiting fulfilment</dt>
+          <dd data-testid="stat-awaiting">{paid.length}</dd>
+        </div>
+        <div className="stat">
+          <dt>Revenue (paid + fulfilled)</dt>
+          <dd data-testid="stat-revenue">{formatMoney(revenueCents)}</dd>
+        </div>
+        <div className="stat">
+          <dt>Units held by open orders</dt>
+          <dd data-testid="stat-held">{held}</dd>
+        </div>
+        <div className="stat">
+          <dt>Variants out of stock</dt>
+          <dd data-testid="stat-oos">{outOfStock.length}</dd>
+        </div>
+      </dl>
+
+      <h2>Needs attention</h2>
       {outOfStock.length === 0 ? (
         <p className="empty">Everything is in stock</p>
       ) : (

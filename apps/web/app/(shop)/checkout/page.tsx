@@ -1,8 +1,8 @@
 import { formatMoney, type Cart } from '@shop/shared';
 import { redirect } from 'next/navigation';
-import { auth } from '../../auth';
-import { CheckoutForm } from '../../components/checkout-form';
-import { cartApiFetch, getCartId } from '../../lib/api';
+import { auth } from '@/auth';
+import { CheckoutForm } from '@/components/checkout-form';
+import { cartApiFetch, getCartId } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 

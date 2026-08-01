@@ -27,7 +27,7 @@ export default async function AdminOrdersPage({
   return (
     <>
       <div className="row between">
-        <h2>Orders</h2>
+        <h1>Orders</h1>
         <div className="row">
           <Link href="/admin/orders" className="badge">
             All

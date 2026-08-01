@@ -38,8 +38,10 @@ export function Nav() {
     };
   }, [pathname]);
 
+  const count = state?.cartCount ?? 0;
+
   return (
-    <nav className="nav">
+    <nav className="nav" aria-label="Primary">
       <Link href="/" className="brand">
         Shop
       </Link>
@@ -49,9 +51,13 @@ export function Nav() {
         {state?.signedIn ? <Link href="/orders">Orders</Link> : <Link href="/login">Sign in</Link>}
         <Link href="/cart" data-testid="cart-link">
           Cart
-          <span data-testid="cart-count">
-            {state && state.cartCount > 0 ? ` (${state.cartCount})` : ''}
+          {/* The count lives inside the link's accessible name rather than in a
+              separate badge, so a screen reader announces "Cart, 2 items" in one
+              go instead of reading a stray number after it. */}
+          <span data-testid="cart-count" className="cart-count">
+            {count > 0 ? ` (${count})` : ''}
           </span>
+          {count > 0 && <span className="sr-only">{count === 1 ? '1 item' : `${count} items`}</span>}
         </Link>
       </div>
     </nav>
