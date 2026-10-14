@@ -65,7 +65,14 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
+    // `^build` even though every dev server watches its own sources: the API, the
+    // worker and the web app import the workspace packages through their
+    // package.json `main`, which points at `dist/`. On a machine that has built
+    // once that file is there and `pnpm dev` works; on a fresh clone the first
+    // import dies and the only symptom is that nothing ever listens on :4000.
+    // scripts/dev-smoke.sh reported exactly that in CI, as a timeout.
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
@@ -81,6 +88,23 @@
       "cache": false
     },
     "test:e2e": {
+      "cache": false
+    },
+
+    // The seed imports workspace packages whose package.json points at
+    // `dist/index.js`. On a clean checkout that file does not exist, and the
+    // failure is `Cannot find module .../dist/index.js` from inside the seed: an
+    // error about module resolution, several layers from "the workspace is not
+    // built". `dependsOn: ["^build"]` makes `pnpm db:seed` build what it needs
+    // first, for CI and for a reader following the README alike.
+    //
+    // Never cached: seeding and migrating write to a database turbo cannot see,
+    // so a cache hit would skip the write and report success.
+    "seed": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "migrate:deploy": {
       "cache": false
     }
   }

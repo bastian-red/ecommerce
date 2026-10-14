@@ -16,8 +16,8 @@
     "test:e2e": "turbo run test:e2e",
     "db:generate": "pnpm --filter @shop/db generate",
     "db:migrate": "pnpm --filter @shop/db migrate:dev",
-    "db:deploy": "pnpm --filter @shop/db migrate:deploy",
-    "db:seed": "pnpm --filter @shop/db seed",
+    "db:deploy": "turbo run migrate:deploy --filter=@shop/db",
+    "db:seed": "turbo run seed --filter=@shop/db",
     "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,md}\"",
     "scan:secrets": "gitleaks detect --no-banner --redact --config .gitleaks.toml",
     "prepare": "node scripts/install-hooks.mjs"

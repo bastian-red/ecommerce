@@ -183,7 +183,9 @@ jobs:
         run: |
           set -a && . ./.env && set +a
           pnpm db:generate && pnpm db:deploy && pnpm db:seed
-      - run: ./scripts/dev-smoke.sh
+      # WAIT_SECONDS is the script's own timeout knob, not application
+      # configuration, so it does not breach the no-env rule above.
+      - run: WAIT_SECONDS=240 ./scripts/dev-smoke.sh
 
   docker:
     name: Docker images build

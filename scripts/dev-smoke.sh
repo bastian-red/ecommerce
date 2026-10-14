@@ -27,6 +27,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 DEV_PID=""
+# How long each server gets to answer. The script's own knob, not application
+# configuration: a cold CI runner compiles the workspace packages, a Nest build
+# and a Next dev server from nothing, and 120s is a local number.
+WAIT_SECONDS="${WAIT_SECONDS:-120}"
 LOG=/tmp/shop-dev-smoke.log
 
 cleanup() {
@@ -78,7 +82,8 @@ DEV_PID=$!
 # design. 120s covers a cold .next on a loaded machine without hiding a hang.
 wait_for() {
   local url="$1" name="$2"
-  for _ in $(seq 1 120); do
+  local i
+  for ((i = 0; i < WAIT_SECONDS; i++)); do
     if curl -sf "$url" >/dev/null 2>&1; then return 0; fi
     # A process that has already exited will never become healthy, and waiting
     # out the full timeout hides the reason it died.
@@ -89,7 +94,7 @@ wait_for() {
     fi
     sleep 1
   done
-  echo "${name} never came up at ${url}. Log:" >&2
+  echo "${name} never came up at ${url} within ${WAIT_SECONDS}s. Log:" >&2
   tail -40 "$LOG" >&2
   return 1
 }
