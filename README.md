@@ -372,17 +372,3 @@ Every variable is documented in `.env.example`. The ones that matter:
 
 No secret is ever committed. `gitleaks` runs as a pre-commit hook and as the
 first CI job, and a finding blocks the push.
-
----
-
-## Not deployed, on purpose
-
-This repo is published to GitHub and hosted nowhere. There is no public URL to
-click, and that is a deliberate choice rather than an unfinished step: the code
-is what is being shown, and it reads the same here as it would behind a domain.
-
-What that does not mean is untested or unrunnable. `docker compose up -d` plus
-`pnpm dev` gives you the whole thing in under a minute, `/health` genuinely
-checks Postgres and Redis and returns 503 when either is down, every service has
-a Dockerfile that CI builds on each push, and the two guarantees above are proven
-by suites you can run yourself in about two minutes.
