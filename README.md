@@ -192,11 +192,21 @@ Seeded logins, both with password `password123`:
 | `admin@shop.local` | ADMIN |
 | `customer@shop.local` | CUSTOMER |
 
+The seed also photographs the catalog: one picture per product from
+`packages/db/prisma/seed-images/`, stored through the same storage contract an
+admin upload uses (type allowlist, magic bytes, size), under a deterministic key
+so a re-seed overwrites rather than duplicates. The photos are public domain,
+CC0 or CC BY from Wikimedia Commons; authors and licences are in
+[`seed-images/CREDITS.md`](packages/db/prisma/seed-images/CREDITS.md).
+
 To run the whole thing as it ships, in containers:
 
 ```bash
 docker compose -f infra/docker-compose.yml --profile app up -d --build
 ```
+
+The API container mounts `<repo>/var/uploads`, the same folder `pnpm db:seed`
+writes to, so the seeded photos are there without seeding inside the container.
 
 ---
 
@@ -366,6 +376,7 @@ Every variable is documented in `.env.example`. The ones that matter:
 | `AUTH_SECRET` | — | Required, >= 16 chars. Signs sessions, service tokens and cart cookies. |
 | `PAYMENTS_DRIVER` | `mock` | `stripe` requires `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and fails at boot without them rather than falling back. |
 | `STORAGE_DRIVER` | `local` | `s3` requires `S3_BUCKET` and `S3_REGION`. |
+| `STORAGE_LOCAL_DIR` | `./var/uploads` | A relative path resolves against the repo root, not the working directory, so the API, the seed and the E2E lane share one folder. Deployments set an absolute path. |
 | `RESERVATION_TTL_MINUTES` | `15` | How long a checkout holds stock. |
 | `TAX_BASIS_POINTS` | `875` | 8.75%, applied to the subtotal only. |
 | `RATE_LIMIT_CHECKOUT` | `30` | Per IP per minute. The test scripts raise this; production should not. |

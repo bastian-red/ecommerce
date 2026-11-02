@@ -97,14 +97,14 @@ export default async function ProductsPage({
 
           <label>Categories</label>
           <div className="filter-links">
-            <Link href={`/products?${buildQuery(base, { category: undefined })}`} className={!query.category ? 'active' : ''}>
+            <Link href={`/products?${buildQuery(base, { category: undefined })}`} aria-current={!query.category ? 'page' : undefined}>
               All
             </Link>
             {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/products?${buildQuery(base, { category: category.slug })}`}
-                className={query.category === category.slug ? 'active' : ''}
+                aria-current={query.category === category.slug ? 'page' : undefined}
               >
                 {category.name}
               </Link>

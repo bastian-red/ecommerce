@@ -9,6 +9,7 @@
 # is what makes the lane repeatable.
 #
 # Usage: ./scripts/e2e.sh [playwright args...]
+#        E2E_API_PORT=4010 E2E_WEB_PORT=3010 ./scripts/e2e.sh   # when 4000/3000 are taken
 # Assumes Postgres and Redis are up (infra/docker-compose.yml).
 set -euo pipefail
 
@@ -43,11 +44,25 @@ export AUTH_SECRET="${AUTH_SECRET:-ci-secret-at-least-32-characters-long}"
 export MOCK_WEBHOOK_SECRET="${MOCK_WEBHOOK_SECRET:-mock-webhook-secret-at-least-32-chars}"
 export PAYMENTS_DRIVER=mock
 export STORAGE_DRIVER=local
+# E2E_API_PORT / E2E_WEB_PORT move the lane off 4000/3000 when another stack
+# holds them. They win over .env (sourced above), and every URL that names a
+# port is derived from them, the media URL included: left at .env's
+# localhost:4000/media, every product photo would point at the other stack.
+if [[ -n "${E2E_API_PORT:-}" ]]; then
+  export API_PORT="$E2E_API_PORT"
+  export API_BASE_URL="http://localhost:${E2E_API_PORT}"
+  export STORAGE_PUBLIC_URL="${API_BASE_URL}/media"
+fi
+if [[ -n "${E2E_WEB_PORT:-}" ]]; then
+  export WEB_PORT="$E2E_WEB_PORT"
+  export APP_BASE_URL="http://localhost:${E2E_WEB_PORT}"
+fi
 export API_PORT="${API_PORT:-4000}"
 export WEB_PORT="${WEB_PORT:-3000}"
 export API_BASE_URL="${API_BASE_URL:-http://localhost:${API_PORT}}"
 export APP_BASE_URL="${APP_BASE_URL:-http://localhost:${WEB_PORT}}"
 export NEXT_PUBLIC_API_BASE_URL="$API_BASE_URL"
+export STORAGE_PUBLIC_URL="${STORAGE_PUBLIC_URL:-${API_BASE_URL}/media}"
 # The suite drives many checkouts from one address; production keeps the
 # defaults in .env.example.
 export RATE_LIMIT_GLOBAL=100000
@@ -68,7 +83,21 @@ done
 
 echo "==> Migrating and reseeding"
 pnpm --filter @shop/db exec prisma migrate deploy >/dev/null
+# The seed stores product photos through @shop/storage, imported from its dist/.
+# A fresh checkout (CI) has none until the full build below, so build it first.
+pnpm --filter @shop/storage build >/dev/null
 pnpm --filter @shop/db run seed
+
+# Drop Next's fetch cache, which the seed cannot invalidate. ISR pages (the home
+# page) read the API through a fetch cached on disk under .next/cache, and that
+# cache survives a rebuild. Without this, `next start` serves the catalog as a
+# previous run saw it: after a run against an unseeded database the home page
+# showed every product without its photo, while the dynamic pages were correct.
+FETCH_CACHE="$ROOT/apps/web/.next/cache/fetch-cache"
+if [[ -d "$FETCH_CACHE" ]]; then
+  find "$FETCH_CACHE" -type f -delete
+  echo "==> Cleared the Next fetch cache"
+fi
 
 echo "==> Building"
 # NODE_ENV=production is required: `next build` under development produces a

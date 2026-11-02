@@ -507,6 +507,24 @@ time {
   }
 }
 
+/* The category list. It had no rule at all, so its links ran together inline
+   as "AllAccessoriesAudioWearables". The current filter is marked by weight and
+   a leading rule, not by colour alone, and carries aria-current. */
+.filter-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+.filter-links a {
+  padding-inline-start: var(--s-2);
+  border-inline-start: 2px solid transparent;
+}
+.filter-links a[aria-current='page'] {
+  font-weight: 600;
+  border-inline-start-color: currentColor;
+}
+
 /* ==========================================================================
    Product detail — gallery plus a buy panel that stays put
    ========================================================================== */

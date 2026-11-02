@@ -33,15 +33,18 @@ test.describe('@demo', () => {
   test('records the guest purchase flow', async ({ page }) => {
     await mkdir(SHOTS, { recursive: true });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await shot(page, 'home');
-
+    // The catalog first: the GIF's first frame is the repo's cover image, and a
+    // shop is judged by its products. The home page's cards sit below the fold.
     await page.goto('/products');
     await page.waitForLoadState('networkidle');
     await shot(page, 'catalog');
 
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await shot(page, 'home');
+
     // Full-text search over the GIN index.
+    await page.goto('/products');
     await page.getByTestId('search-input').fill('noise cancellation');
     await page.getByRole('button', { name: /apply/i }).click();
     await page.getByTestId('product-card').first().waitFor();

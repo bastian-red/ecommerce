@@ -21,11 +21,57 @@ test.describe('guest shopping flow', () => {
     await expect(page.getByTestId('product-card')).toHaveCount(1);
     await expect(page.getByTestId('product-card').first()).toHaveAttribute('data-slug', 'ear-one');
 
+    // The category links are separate, legible targets. With no CSS rule they
+    // ran together inline as "AllAccessoriesAudioWearables".
+    const links = page.locator('.filter-links a');
+    const boxes = await links.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()));
+    expect(boxes.length).toBeGreaterThan(2);
+    for (let i = 1; i < boxes.length; i += 1) {
+      expect(boxes[i].top, 'category links overlap or share a line').toBeGreaterThanOrEqual(boxes[i - 1].bottom);
+    }
+    await expect(links.first()).toHaveAttribute('aria-current', 'page');
+
     // A category filter narrows without erroring.
     await page.goto('/products?category=audio');
+    await expect(page.locator('.filter-links a[aria-current="page"]')).toHaveText('Audio');
     const audio = await page.getByTestId('product-card').count();
     expect(audio).toBeGreaterThan(0);
     expect(audio).toBeLessThan(all);
+  });
+
+  test('every seeded product is shown as a loaded photograph, not initials', async ({ page }) => {
+    // Without photos each card fell back to two letters of its title ("Ea" for
+    // Ear One), the first thing a visitor saw. Checked on the seeded slugs only:
+    // the admin spec creates photo-less `e2e-widget-*` products in parallel.
+    const seeded = [
+      'ear-one',
+      'ear-open',
+      'monitor-speaker',
+      'watch-pro',
+      'band-woven',
+      'cable-usbc',
+      'power-brick',
+    ];
+    await page.goto('/products');
+    for (const slug of seeded) {
+      const card = page.locator(`[data-testid="product-card"][data-slug="${slug}"]`);
+      await expect(card.locator('.placeholder'), `${slug} shows initials`).toHaveCount(0);
+      const img = card.locator('img');
+      await expect(img).toHaveAttribute('alt', /\w{4,}/);
+      await img.scrollIntoViewIfNeeded();
+      // naturalWidth is 0 for a broken image: the URL must actually serve bytes.
+      await expect
+        .poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth), {
+          message: `${slug} photo did not load`,
+        })
+        .toBeGreaterThan(0);
+    }
+
+    await page.goto('/products/monitor-speaker');
+    const hero = page.locator('.gallery img');
+    await expect
+      .poll(() => hero.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth))
+      .toBeGreaterThan(0);
   });
 
   test('a query that matches nothing shows an empty state, not an error', async ({ page }) => {
