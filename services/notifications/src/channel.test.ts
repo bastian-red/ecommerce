@@ -97,7 +97,7 @@ describe('NotificationService', () => {
     email: 'buyer@example.com',
     customerName: 'Ada',
     currency: 'usd',
-    items: [{ productTitle: 'Ear One', variantName: 'White', quantity: 1, lineTotalCents: 14_900 }],
+    items: [{ productTitle: 'Teapot', variantName: 'Stoneware', quantity: 1, lineTotalCents: 14_900 }],
     subtotalCents: 14_900,
     shippingCents: 0,
     taxCents: 1_304,

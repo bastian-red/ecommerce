@@ -12,8 +12,8 @@ const data: OrderEmailData = {
   customerName: 'Ada',
   currency: 'usd',
   items: [
-    { productTitle: 'Ear One', variantName: 'White', quantity: 2, lineTotalCents: 29_800 },
-    { productTitle: 'USB-C Cable', variantName: '1.5m', quantity: 1, lineTotalCents: 2_900 },
+    { productTitle: 'Teapot', variantName: 'Stoneware', quantity: 2, lineTotalCents: 29_800 },
+    { productTitle: 'Bud Vase', variantName: 'Small', quantity: 1, lineTotalCents: 2_900 },
   ],
   subtotalCents: 32_700,
   shippingCents: 0,
@@ -30,7 +30,7 @@ describe('escapeHtml', () => {
   });
 
   it('leaves plain text untouched', () => {
-    expect(escapeHtml('Ear One 1.5m')).toBe('Ear One 1.5m');
+    expect(escapeHtml('Bud Vase 12 cm')).toBe('Bud Vase 12 cm');
   });
 });
 
@@ -56,8 +56,8 @@ describe('renderOrderEmail', () => {
   it('lists every line item in both parts', () => {
     const message = renderOrderEmail('ORDER_CONFIRMED', data);
     for (const part of [message.text, message.html]) {
-      expect(part).toContain('Ear One');
-      expect(part).toContain('USB-C Cable');
+      expect(part).toContain('Teapot');
+      expect(part).toContain('Bud Vase');
     }
   });
 
@@ -128,7 +128,7 @@ describe('renderOrderEmail', () => {
 
   it('renders a single-item order without a stray separator', () => {
     const message = renderOrderEmail('ORDER_FULFILLED', { ...data, items: [data.items[0]!] });
-    expect(message.text).toContain('2 x Ear One (White)');
+    expect(message.text).toContain('2 x Teapot (Stoneware)');
     expect(message.text).not.toContain('USB-C');
   });
 

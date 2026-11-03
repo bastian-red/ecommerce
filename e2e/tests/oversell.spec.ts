@@ -33,10 +33,10 @@ async function setAvailableToOne(context: BrowserContext, slug: string, sku: str
 test.describe('two buyers race the last unit', () => {
   test('exactly one wins and the other is told what ran out', async ({ browser }) => {
     const admin = await browser.newContext();
-    await setAvailableToOne(admin, 'ear-open', 'EARO-WHT');
+    await setAvailableToOne(admin, 'tea-bowl', 'BOWL-CEL');
     await admin.close();
 
-    expect(await availableStock('ear-open', 'EARO-WHT')).toBe(1);
+    expect(await availableStock('tea-bowl', 'BOWL-CEL')).toBe(1);
 
     // Two independent browser contexts: separate cookie jars, so separate carts.
     const first = await browser.newContext();
@@ -47,7 +47,7 @@ test.describe('two buyers race the last unit', () => {
     // Both put the same last unit in their cart. Both are told it is available,
     // because at that moment it is: a cart holds nothing.
     for (const page of [pageA, pageB]) {
-      await page.goto('/products/ear-open');
+      await page.goto('/products/tea-bowl');
       await page.getByTestId('add-to-cart').click();
       await page.waitForTimeout(600);
     }
@@ -75,15 +75,15 @@ test.describe('two buyers race the last unit', () => {
     await expect(loser.getByTestId('stock-details')).toContainText('0 left');
 
     // The winner holds the unit; nothing was oversold.
-    expect(await availableStock('ear-open', 'EARO-WHT')).toBe(0);
+    expect(await availableStock('tea-bowl', 'BOWL-CEL')).toBe(0);
 
     await first.close();
     await second.close();
   });
 
   test('the product page shows sold out once the last unit is reserved', async ({ page }) => {
-    expect(await availableStock('ear-open', 'EARO-WHT')).toBe(0);
-    await page.goto('/products/ear-open');
+    expect(await availableStock('tea-bowl', 'BOWL-CEL')).toBe(0);
+    await page.goto('/products/tea-bowl');
     await expect(page.getByTestId('variant-stock').first()).toHaveText('Sold out');
     await expect(page.getByTestId('add-to-cart')).toBeDisabled();
   });
@@ -92,7 +92,7 @@ test.describe('two buyers race the last unit', () => {
     // Belt and braces: the UI disabling a button is not the guarantee. Anyone
     // can post to the API, and it must refuse there too.
     const cartId = 'e2edirect'.padEnd(32, '0');
-    const product = await (await fetch(`${API_BASE_URL}/products/ear-open`)).json();
+    const product = await (await fetch(`${API_BASE_URL}/products/tea-bowl`)).json();
     const variantId = product.variants[0].id;
 
     const add = await request.post(`${API_BASE_URL}/cart/lines`, {

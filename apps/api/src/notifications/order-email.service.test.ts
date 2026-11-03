@@ -16,7 +16,7 @@ const order = {
   totalCents: 16_204,
   shippingName: 'Ada Lovelace',
   user: null,
-  items: [{ productTitle: 'Ear One', variantName: 'White', quantity: 1, lineTotalCents: 14_900 }],
+  items: [{ productTitle: 'Teapot', variantName: 'Stoneware', quantity: 1, lineTotalCents: 14_900 }],
 };
 
 /**

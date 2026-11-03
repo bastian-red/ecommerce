@@ -32,7 +32,7 @@ type Scheme = 'light' | 'dark';
 const SCHEMES: Scheme[] = ['light', 'dark'];
 
 /** A seeded product with several variants and an image. See packages/db/prisma/seed.ts. */
-const PRODUCT = 'ear-one';
+const PRODUCT = 'kiln-mug';
 
 interface RouteCase {
   name: string;
@@ -49,7 +49,7 @@ const SHOP_ROUTES: RouteCase[] = [
   { name: 'catalog', path: '/products' },
   {
     name: 'catalog filtered by search',
-    path: '/products?q=ear',
+    path: '/products?q=glaze',
     prepare: async (page) => {
       await expect(page.getByTestId('product-card').first()).toBeVisible();
     },
