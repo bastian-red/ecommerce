@@ -11,10 +11,10 @@ import { addFirstVariantToCart, availableStock, fillCheckout } from './helpers';
  */
 test.describe('duplicate webhook delivery', () => {
   test('twenty deliveries of one payment charge and ship the order once', async ({ page }) => {
-    const before = await availableStock('band-woven', 'BAND-BLK');
+    const before = await availableStock('serving-bowl', 'SERVE-OXB');
 
-    await page.goto('/products/band-woven');
-    // BAND-BLK is the second variant.
+    await page.goto('/products/serving-bowl');
+    // SERVE-OXB is the second variant.
     await page.getByTestId('variant-option').nth(1).locator('input').check();
     await page.getByTestId('add-to-cart').click();
     await page.waitForTimeout(600);
@@ -23,7 +23,7 @@ test.describe('duplicate webhook delivery', () => {
     await page.waitForURL(/\/mock-checkout\//, { timeout: 20_000 });
 
     // Reserved, not yet shipped.
-    expect(await availableStock('band-woven', 'BAND-BLK')).toBe(before - 1);
+    expect(await availableStock('serving-bowl', 'SERVE-OXB')).toBe(before - 1);
 
     // Twenty concurrent deliveries of the same event, which is what a gateway
     // does when it times out waiting for our acknowledgement and retries.
@@ -34,13 +34,13 @@ test.describe('duplicate webhook delivery', () => {
     await expect(page.getByTestId('order-status')).toHaveText('PAID');
 
     // One decrement, not twenty.
-    expect(await availableStock('band-woven', 'BAND-BLK')).toBe(before - 1);
+    expect(await availableStock('serving-bowl', 'SERVE-OXB')).toBe(before - 1);
   });
 
   test('replaying the same event id within a session changes nothing', async ({ page }) => {
-    const before = await availableStock('cable-usbc', 'CBL-150');
+    const before = await availableStock('bud-vase', 'VASE-SM');
 
-    await addFirstVariantToCart(page, 'cable-usbc');
+    await addFirstVariantToCart(page, 'bud-vase');
     await fillCheckout(page, 'replay@example.com');
     await page.waitForURL(/\/mock-checkout\//, { timeout: 20_000 });
 
@@ -55,15 +55,15 @@ test.describe('duplicate webhook delivery', () => {
     await expect(page.getByTestId('mock-statuses')).toContainText('200', { timeout: 15_000 });
 
     // Still reserved, never shipped: a replayed failure is still one failure.
-    expect(await availableStock('cable-usbc', 'CBL-150')).toBe(before - 1);
+    expect(await availableStock('bud-vase', 'VASE-SM')).toBe(before - 1);
   });
 
   test('paying an already-paid order with a fresh event id changes nothing', async ({ page }) => {
     // This is layer two in isolation. The event id is genuinely new, so the
     // dedupe table cannot help; the guarded status transition is what refuses.
-    const before = await availableStock('power-brick', 'PWR-65');
+    const before = await availableStock('tall-vase', 'VASE-TL');
 
-    await addFirstVariantToCart(page, 'power-brick');
+    await addFirstVariantToCart(page, 'tall-vase');
     await fillCheckout(page, 'double-pay@example.com');
     await page.waitForURL(/\/mock-checkout\//, { timeout: 20_000 });
 
@@ -71,7 +71,7 @@ test.describe('duplicate webhook delivery', () => {
     await page.getByTestId('mock-approve').click();
     await page.waitForURL(/\/orders\//, { timeout: 25_000 });
 
-    const afterFirst = await availableStock('power-brick', 'PWR-65');
+    const afterFirst = await availableStock('tall-vase', 'VASE-TL');
     expect(afterFirst).toBe(before - 1);
 
     // Back to the gateway page and pay again. A brand new event id, same order.
@@ -83,7 +83,7 @@ test.describe('duplicate webhook delivery', () => {
     await page.waitForURL(/\/orders\//, { timeout: 25_000 });
     await expect(page.getByTestId('order-status')).toHaveText('PAID');
 
-    expect(await availableStock('power-brick', 'PWR-65')).toBe(afterFirst);
+    expect(await availableStock('tall-vase', 'VASE-TL')).toBe(afterFirst);
   });
 });
 

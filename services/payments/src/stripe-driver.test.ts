@@ -138,7 +138,7 @@ describe('createStripeGateway', () => {
     orderNumber: 'SHOP-1001',
     email: 'buyer@example.com',
     currency: 'usd',
-    lineItems: [{ name: 'Ear One', description: 'White', unitPriceCents: 14_900, quantity: 2 }],
+    lineItems: [{ name: 'Teapot', description: 'Stoneware', unitPriceCents: 14_900, quantity: 2 }],
     shippingCents: 599,
     taxCents: 2_643,
     successUrl: 'http://localhost:3000/orders/order_1',
@@ -184,7 +184,7 @@ describe('createStripeGateway', () => {
 
     const [body] = create.mock.calls[0] as [Record<string, any>];
     const names = body.line_items.map((item: any) => item.price_data.product_data.name);
-    expect(names).toEqual(['Ear One', 'Shipping', 'Tax']);
+    expect(names).toEqual(['Teapot', 'Shipping', 'Tax']);
     const total = body.line_items.reduce(
       (sum: number, item: any) => sum + item.price_data.unit_amount * item.quantity,
       0,

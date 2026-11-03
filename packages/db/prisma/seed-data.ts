@@ -36,96 +36,115 @@ export type SeedProduct = {
 };
 
 export const CATEGORIES: Array<{ slug: string; name: string }> = [
-  { slug: 'audio', name: 'Audio' },
-  { slug: 'wearables', name: 'Wearables' },
-  { slug: 'accessories', name: 'Accessories' },
+  { slug: 'drinkware', name: 'Drinkware' },
+  { slug: 'tableware', name: 'Tableware' },
+  { slug: 'objects', name: 'Objects' },
 ];
 
+/**
+ * A small-batch ceramics studio. Every piece comes out of one kiln firing, so
+ * stock is genuinely scarce: the tea bowl's seven units are what the oversell
+ * race fights over, and the jug's three oxblood units are the low-stock case.
+ *
+ * Within a product, the first variant is the glaze the photo shows, because the
+ * product page preselects it.
+ */
 export const PRODUCTS: SeedProduct[] = [
   {
-    slug: 'ear-one',
-    image: { file: 'ear-one.webp', alt: 'White wireless earbuds beside their open charging case' },
-    title: 'Ear One',
+    slug: 'kiln-mug',
+    image: { file: 'kiln-mug.webp', alt: 'An ash-white glazed stoneware mug on a wooden table against a pale wall' },
+    title: 'Kiln Mug',
     description:
-      'Transparent in-ear monitors with active noise cancellation and a 36 hour case. ' +
-      'Machined aluminium stems, silicone tips in three sizes.',
-    category: 'audio',
+      'Wheel-thrown stoneware mug, 350 ml, with a pulled handle and a thumb rest. Glazed inside ' +
+      'and out and fired to cone 6; dishwasher and microwave safe.',
+    category: 'drinkware',
     variants: [
-      { sku: 'EAR1-WHT', name: 'White', priceCents: 14900, stockOnHand: 42 },
-      { sku: 'EAR1-BLK', name: 'Black', priceCents: 14900, stockOnHand: 18 },
+      { sku: 'MUG-ASH', name: 'Ash white', priceCents: 3800, stockOnHand: 42 },
+      { sku: 'MUG-OXB', name: 'Oxblood', priceCents: 3800, stockOnHand: 18 },
     ],
   },
   {
-    slug: 'ear-open',
-    image: { file: 'ear-open.webp', alt: 'Navy open-ear headphones with a wraparound band on a white backdrop' },
-    title: 'Ear Open',
+    slug: 'tea-bowl',
+    image: {
+      file: 'tea-bowl.webp',
+      alt: 'A white stoneware bowl with a celadon-glazed interior and small square tabs around its rim',
+    },
+    title: 'Tea Bowl',
     description:
-      'Open-ear clips that leave the canal free. Directional drivers keep the sound in and the ' +
-      'street audible.',
-    category: 'audio',
-    variants: [{ sku: 'EARO-WHT', name: 'White', priceCents: 19900, stockOnHand: 7 }],
+      'A wide, low bowl for matcha or a slow pot of sencha, 400 ml. Celadon inside, white satin ' +
+      'outside, hand-cut tabs around the rim. Hand wash only.',
+    category: 'drinkware',
+    variants: [{ sku: 'BOWL-CEL', name: 'Celadon', priceCents: 5400, stockOnHand: 7 }],
   },
   {
-    slug: 'monitor-speaker',
-    image: { file: 'monitor-speaker.webp', alt: 'A round white desktop speaker on a wooden stand beside a monitor' },
-    title: 'Monitor Speaker',
+    slug: 'pouring-jug',
+    image: { file: 'pouring-jug.webp', alt: 'A rustic ash-white stoneware jug with a pinched spout and a loop handle' },
+    title: 'Pouring Jug',
     description:
-      'A single full-range desktop monitor. Class D amplification, USB-C in, 3.5mm in, ' +
-      'no app required.',
-    category: 'audio',
+      'A 600 ml jug for milk, water or a few stems, its spout pinched by hand so it pours without ' +
+      'dripping. Iron-speckled clay shows through the glaze; dishwasher safe.',
+    category: 'drinkware',
     variants: [
-      { sku: 'MON-BLK', name: 'Black', priceCents: 29900, stockOnHand: 11 },
-      { sku: 'MON-GRY', name: 'Grey', priceCents: 29900, stockOnHand: 3 },
+      { sku: 'JUG-ASH', name: 'Ash white', priceCents: 4600, stockOnHand: 11 },
+      { sku: 'JUG-OXB', name: 'Oxblood', priceCents: 4600, stockOnHand: 3 },
     ],
   },
   {
-    slug: 'watch-pro',
-    image: { file: 'watch-pro.webp', alt: 'A smartwatch on a wrist, its face lit, a finger on the crown' },
-    title: 'Watch Pro',
+    slug: 'dinner-plate',
+    image: {
+      file: 'dinner-plate.webp',
+      alt: 'Four cream stoneware dinner plates stacked, a mandarin on top and a mustard napkin beside them',
+    },
+    title: 'Stoneware Dinner Plate',
     description:
-      'Aluminium case, always-on transflective display, 14 day battery. Reads notifications, ' +
-      'nothing more.',
-    category: 'wearables',
+      'A 27 cm plate with a raised foot ring, so a stack sits flat in the cupboard. Satin oat glaze ' +
+      'that does not show cutlery marks; dishwasher safe.',
+    category: 'tableware',
     variants: [
-      { sku: 'WPRO-41', name: '41mm', priceCents: 24900, stockOnHand: 25 },
-      { sku: 'WPRO-45', name: '45mm', priceCents: 27900, stockOnHand: 14 },
+      { sku: 'PLATE-1', name: 'Single', priceCents: 3200, stockOnHand: 25 },
+      { sku: 'PLATE-4', name: 'Set of 4', priceCents: 11900, stockOnHand: 14 },
     ],
   },
   {
-    slug: 'band-woven',
-    image: { file: 'band-woven.webp', alt: 'A watch on a tan strap, worn on an outstretched arm' },
-    title: 'Woven Band',
-    description: 'Recycled polyester band with a stainless clasp. Fits every Watch case size.',
-    category: 'wearables',
+    slug: 'serving-bowl',
+    image: { file: 'serving-bowl.webp', alt: 'A deep white speckled stoneware serving bowl on a pale grey surface' },
+    title: 'Serving Bowl',
+    description:
+      'A 26 cm bowl for salads and pasta, thrown thick enough to keep warm food warm. The clay ' +
+      'speckles through the glaze at the rim; dishwasher safe.',
+    category: 'tableware',
     variants: [
-      { sku: 'BAND-RED', name: 'Red', priceCents: 4900, stockOnHand: 60 },
-      { sku: 'BAND-BLK', name: 'Black', priceCents: 4900, stockOnHand: 55 },
+      { sku: 'SERVE-SPK', name: 'Speckled', priceCents: 8900, stockOnHand: 60 },
+      { sku: 'SERVE-OXB', name: 'Oxblood', priceCents: 8900, stockOnHand: 55 },
     ],
   },
   {
-    slug: 'cable-usbc',
-    image: { file: 'cable-usbc.webp', alt: 'A coiled white USB-C cable with both connectors in view' },
-    title: 'USB-C Cable',
-    description: 'Braided 240W USB-C cable, 1.5m, with an inline power indicator.',
-    category: 'accessories',
-    variants: [{ sku: 'CBL-150', name: '1.5m', priceCents: 2900, stockOnHand: 120 }],
+    slug: 'bud-vase',
+    image: { file: 'bud-vase.webp', alt: 'A small round matte white bud vase with a narrow neck on a grey ground' },
+    title: 'Bud Vase',
+    description:
+      'A 12 cm vase for a single stem. Unglazed and matte outside, glazed inside so it holds water.',
+    category: 'objects',
+    variants: [{ sku: 'VASE-SM', name: 'Small', priceCents: 2900, stockOnHand: 120 }],
   },
   {
-    slug: 'power-brick',
-    image: { file: 'power-brick.webp', alt: 'Two white USB-C wall chargers, a large one and a compact one' },
-    title: 'Power Brick',
-    description: 'A 65W GaN charger with two USB-C ports and folding pins.',
-    category: 'accessories',
-    variants: [{ sku: 'PWR-65', name: '65W', priceCents: 5900, stockOnHand: 34 }],
+    slug: 'tall-vase',
+    image: { file: 'tall-vase.webp', alt: 'A tall bottle vase in a deep oxblood glaze, its lip fading to pale, on white' },
+    title: 'Tall Vase',
+    description:
+      'A 30 cm bottle vase dipped in our oxblood glaze, which breaks pale where it runs thin at the ' +
+      'lip. Watertight; wipe clean.',
+    category: 'objects',
+    variants: [{ sku: 'VASE-TL', name: 'Tall', priceCents: 6900, stockOnHand: 34 }],
   },
   {
     // Deliberately DRAFT: the storefront must never show it, and an integration
     // test asserts exactly that.
-    slug: 'phone-three',
-    title: 'Phone Three',
-    description: 'Unannounced. Present in the database so draft filtering has something to hide.',
-    category: 'accessories',
+    slug: 'teapot',
+    title: 'Teapot',
+    description: 'Next kiln batch. Present in the database so draft filtering has something to hide.',
+    category: 'objects',
     status: ProductStatus.DRAFT,
-    variants: [{ sku: 'PH3-256', name: '256GB', priceCents: 79900, stockOnHand: 0 }],
+    variants: [{ sku: 'POT-1', name: 'Stoneware', priceCents: 14900, stockOnHand: 0 }],
   },
 ];

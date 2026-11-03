@@ -16,13 +16,13 @@ test.describe('guest shopping flow', () => {
     expect(all).toBeGreaterThan(2);
 
     // Full-text search, served by the GIN index through websearch_to_tsquery.
-    await page.getByTestId('search-input').fill('noise cancellation');
+    await page.getByTestId('search-input').fill('thumb rest');
     await page.getByRole('button', { name: /apply/i }).click();
     await expect(page.getByTestId('product-card')).toHaveCount(1);
-    await expect(page.getByTestId('product-card').first()).toHaveAttribute('data-slug', 'ear-one');
+    await expect(page.getByTestId('product-card').first()).toHaveAttribute('data-slug', 'kiln-mug');
 
     // The category links are separate, legible targets. With no CSS rule they
-    // ran together inline as "AllAccessoriesAudioWearables".
+    // ran together inline as "AllDrinkwareObjectsTableware".
     const links = page.locator('.filter-links a');
     const boxes = await links.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()));
     expect(boxes.length).toBeGreaterThan(2);
@@ -30,27 +30,30 @@ test.describe('guest shopping flow', () => {
       expect(boxes[i].top, 'category links overlap or share a line').toBeGreaterThanOrEqual(boxes[i - 1].bottom);
     }
     await expect(links.first()).toHaveAttribute('aria-current', 'page');
+    // Exactly the studio's three categories. A reseed over an older catalog once
+    // left its categories behind as filters that led to empty pages.
+    await expect(links).toHaveText(['All', 'Drinkware', 'Objects', 'Tableware']);
 
     // A category filter narrows without erroring.
-    await page.goto('/products?category=audio');
-    await expect(page.locator('.filter-links a[aria-current="page"]')).toHaveText('Audio');
-    const audio = await page.getByTestId('product-card').count();
-    expect(audio).toBeGreaterThan(0);
-    expect(audio).toBeLessThan(all);
+    await page.goto('/products?category=drinkware');
+    await expect(page.locator('.filter-links a[aria-current="page"]')).toHaveText('Drinkware');
+    const drinkware = await page.getByTestId('product-card').count();
+    expect(drinkware).toBeGreaterThan(0);
+    expect(drinkware).toBeLessThan(all);
   });
 
   test('every seeded product is shown as a loaded photograph, not initials', async ({ page }) => {
-    // Without photos each card fell back to two letters of its title ("Ea" for
-    // Ear One), the first thing a visitor saw. Checked on the seeded slugs only:
+    // Without photos each card fell back to two letters of its title ("Ki" for
+    // Kiln Mug), the first thing a visitor saw. Checked on the seeded slugs only:
     // the admin spec creates photo-less `e2e-widget-*` products in parallel.
     const seeded = [
-      'ear-one',
-      'ear-open',
-      'monitor-speaker',
-      'watch-pro',
-      'band-woven',
-      'cable-usbc',
-      'power-brick',
+      'kiln-mug',
+      'tea-bowl',
+      'pouring-jug',
+      'dinner-plate',
+      'serving-bowl',
+      'bud-vase',
+      'tall-vase',
     ];
     await page.goto('/products');
     for (const slug of seeded) {
@@ -67,7 +70,7 @@ test.describe('guest shopping flow', () => {
         .toBeGreaterThan(0);
     }
 
-    await page.goto('/products/monitor-speaker');
+    await page.goto('/products/pouring-jug');
     const hero = page.locator('.gallery img');
     await expect
       .poll(() => hero.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth))
@@ -80,16 +83,16 @@ test.describe('guest shopping flow', () => {
   });
 
   test('a draft product is not reachable from the storefront', async ({ page }) => {
-    // phone-three is seeded as DRAFT precisely so this has something to check.
-    const response = await page.goto('/products/phone-three');
+    // teapot is seeded as DRAFT precisely so this has something to check.
+    const response = await page.goto('/products/teapot');
     expect(response?.status()).toBe(404);
   });
 
   test('buys an item end to end and the stock drops by what was bought', async ({ page }) => {
-    const before = await availableStock('cable-usbc', 'CBL-150');
+    const before = await availableStock('bud-vase', 'VASE-SM');
     expect(before).toBeGreaterThan(0);
 
-    await addFirstVariantToCart(page, 'cable-usbc');
+    await addFirstVariantToCart(page, 'bud-vase');
 
     await page.goto('/cart');
     await expect(page.getByTestId('cart-line')).toHaveCount(1);
@@ -108,7 +111,7 @@ test.describe('guest shopping flow', () => {
     await expect(page.getByTestId('mock-amount')).toHaveText(total!);
 
     // Stock is reserved but not yet shipped: available has dropped, on-hand has not.
-    expect(await availableStock('cable-usbc', 'CBL-150')).toBe(before - 1);
+    expect(await availableStock('bud-vase', 'VASE-SM')).toBe(before - 1);
 
     await page.getByTestId('mock-approve').click();
 
@@ -120,11 +123,11 @@ test.describe('guest shopping flow', () => {
     await expect(page.getByTestId('order-total')).toHaveText(total!);
 
     // Fulfilment consumed the reservation rather than adding a second decrement.
-    expect(await availableStock('cable-usbc', 'CBL-150')).toBe(before - 1);
+    expect(await availableStock('bud-vase', 'VASE-SM')).toBe(before - 1);
   });
 
   test('a declined payment leaves the order unpaid', async ({ page }) => {
-    await addFirstVariantToCart(page, 'power-brick');
+    await addFirstVariantToCart(page, 'tall-vase');
     await fillCheckout(page, 'declined@example.com');
     await page.waitForURL(/\/mock-checkout\//, { timeout: 20_000 });
 
@@ -139,7 +142,7 @@ test.describe('guest shopping flow', () => {
   });
 
   test('cart quantities can be changed and lines removed', async ({ page }) => {
-    await addFirstVariantToCart(page, 'band-woven');
+    await addFirstVariantToCart(page, 'serving-bowl');
     await page.goto('/cart');
 
     await page.getByLabel('Increase quantity').click();
@@ -153,7 +156,7 @@ test.describe('guest shopping flow', () => {
   });
 
   test('the cart survives a reload, because it lives in Redis not in memory', async ({ page }) => {
-    await addFirstVariantToCart(page, 'cable-usbc');
+    await addFirstVariantToCart(page, 'bud-vase');
     await page.goto('/cart');
     await expect(page.getByTestId('cart-line')).toHaveCount(1);
 

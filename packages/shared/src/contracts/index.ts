@@ -266,7 +266,7 @@ export type CheckoutResult = z.infer<typeof checkoutResultSchema>;
 
 /**
  * Why a checkout was refused. The storefront maps these to a specific message,
- * so a customer is told "only 2 left of Ear One / Black" rather than "error".
+ * so a customer is told "only 2 left of Kiln Mug / Oxblood" rather than "error".
  */
 export const checkoutErrorCodeSchema = z.enum([
   'CART_EMPTY',

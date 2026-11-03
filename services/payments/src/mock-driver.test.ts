@@ -19,8 +19,8 @@ const params: CheckoutParams = {
   email: 'buyer@example.com',
   currency: 'usd',
   lineItems: [
-    { name: 'Ear One', description: 'White', unitPriceCents: 14_900, quantity: 2 },
-    { name: 'USB-C Cable', unitPriceCents: 2_900, quantity: 1 },
+    { name: 'Teapot', description: 'Stoneware', unitPriceCents: 14_900, quantity: 2 },
+    { name: 'Bud Vase', unitPriceCents: 2_900, quantity: 1 },
   ],
   shippingCents: 0,
   taxCents: 2_861,

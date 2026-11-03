@@ -16,12 +16,12 @@ import {
 
 describe('slugSchema', () => {
   it('accepts kebab-case', () => {
-    expect(slugSchema.safeParse('ear-one').success).toBe(true);
+    expect(slugSchema.safeParse('kiln-mug').success).toBe(true);
     expect(slugSchema.safeParse('usb-c-cable-15').success).toBe(true);
   });
 
   it('rejects uppercase, spaces and edge dashes', () => {
-    for (const bad of ['Ear One', 'ear_one', '-ear', 'ear-', 'ear--one', '']) {
+    for (const bad of ['Kiln Mug', 'kiln_mug', '-kiln', 'kiln-', 'kiln--mug', '']) {
       expect(slugSchema.safeParse(bad).success).toBe(false);
     }
   });
@@ -154,7 +154,7 @@ describe('checkoutInputSchema', () => {
 
 describe('adminVariantInputSchema', () => {
   it('accepts a conventional SKU', () => {
-    expect(adminVariantInputSchema.safeParse({ sku: 'EAR1-WHT', name: 'White', priceCents: 100 }).success).toBe(
+    expect(adminVariantInputSchema.safeParse({ sku: 'MUG-ASH', name: 'Ash white', priceCents: 100 }).success).toBe(
       true,
     );
   });

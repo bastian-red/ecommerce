@@ -192,11 +192,13 @@ Seeded logins, both with password `password123`:
 | `admin@shop.local` | ADMIN |
 | `customer@shop.local` | CUSTOMER |
 
-The seed also photographs the catalog: one picture per product from
+The demo catalog is a fictional small-batch ceramics studio: mugs, bowls, plates
+and vases from one kiln firing, so low stock is the normal case rather than a
+contrived one. The seed photographs it: one picture per product on sale from
 `packages/db/prisma/seed-images/`, stored through the same storage contract an
 admin upload uses (type allowlist, magic bytes, size), under a deterministic key
-so a re-seed overwrites rather than duplicates. The photos are public domain,
-CC0 or CC BY from Wikimedia Commons; authors and licences are in
+so a re-seed overwrites rather than duplicates. The photos are from Unsplash
+under the Unsplash License; photographers and source pages are in
 [`seed-images/CREDITS.md`](packages/db/prisma/seed-images/CREDITS.md).
 
 To run the whole thing as it ships, in containers:

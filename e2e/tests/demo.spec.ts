@@ -45,17 +45,17 @@ test.describe('@demo', () => {
 
     // Full-text search over the GIN index.
     await page.goto('/products');
-    await page.getByTestId('search-input').fill('noise cancellation');
+    await page.getByTestId('search-input').fill('thumb rest');
     await page.getByRole('button', { name: /apply/i }).click();
     await page.getByTestId('product-card').first().waitFor();
     await shot(page, 'search');
 
-    await page.goto('/products/ear-one');
+    await page.goto('/products/kiln-mug');
     await page.waitForLoadState('networkidle');
     await shot(page, 'product');
 
-    const before = await availableStock('ear-one', 'EAR1-WHT');
-    await addFirstVariantToCart(page, 'ear-one');
+    const before = await availableStock('kiln-mug', 'MUG-ASH');
+    await addFirstVariantToCart(page, 'kiln-mug');
 
     await page.goto('/cart');
     await page.waitForLoadState('networkidle');
@@ -76,7 +76,7 @@ test.describe('@demo', () => {
     await shot(page, 'order-confirmed');
 
     // One decrement, not twenty.
-    const after = await availableStock('ear-one', 'EAR1-WHT');
+    const after = await availableStock('kiln-mug', 'MUG-ASH');
     if (after !== before - 1) {
       throw new Error(`demo: expected stock ${before - 1} after one purchase, got ${after}`);
     }

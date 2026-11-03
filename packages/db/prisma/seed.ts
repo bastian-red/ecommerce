@@ -1,6 +1,7 @@
 /**
- * Demo catalog for the storefront: two users, three categories, eight products
- * with variants, real stock and a photograph each (data in `seed-data.ts`).
+ * Demo catalog for the storefront, a small-batch ceramics studio: two users,
+ * three categories, eight products with variants, real stock and a photograph
+ * for each one on sale (data in `seed-data.ts`).
  *
  * Passwords: admin@shop.local / customer@shop.local, both "password123".
  *
@@ -32,13 +33,18 @@ function hashPassword(password: string): string {
  * The file is rewritten every run, which also restores it after a wiped volume.
  */
 async function seedImage(storage: StorageDriver, productId: string, product: SeedProduct) {
+  // Every row the seed ever wrote for this product goes first, whatever file it
+  // named: a product whose photo was removed or renamed in seed-data.ts must not
+  // keep serving the old one. Admin uploads have random keys without the seed
+  // prefix, so they are left alone.
+  await prisma.productImage.deleteMany({
+    where: { productId, storageKey: { startsWith: seedImageKey(productId, '') } },
+  });
   if (!product.image) return;
   const body = await readFile(join(SEED_IMAGE_DIR, product.image.file));
   validateUpload({ contentType: 'image/webp', size: body.length, body });
   const key = seedImageKey(productId, product.image.file);
   await storage.put({ key, body, contentType: 'image/webp' });
-  // Admin-uploaded photos are left alone; only the seed's own row is replaced.
-  await prisma.productImage.deleteMany({ where: { productId, storageKey: key } });
   await prisma.productImage.create({
     data: { productId, storageKey: key, alt: product.image.alt, position: 0 },
   });
@@ -125,6 +131,15 @@ async function main() {
       create: category,
     });
     categoryIds.set(category.slug, row.id);
+  }
+  // Same reasoning as the product prune: a category the catalog no longer
+  // defines would otherwise stay in the storefront's filter list, leading to an
+  // empty page. Products keep `categoryId` as SetNull, so nothing cascades.
+  const staleCategories = await prisma.category.deleteMany({
+    where: { slug: { notIn: CATEGORIES.map((category) => category.slug) } },
+  });
+  if (staleCategories.count > 0) {
+    console.log(`Pruned ${staleCategories.count} stale categor${staleCategories.count === 1 ? "y" : "ies"}.`);
   }
 
   const storage = createStorage(storageConfigFromEnv());
