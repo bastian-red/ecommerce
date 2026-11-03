@@ -25,7 +25,7 @@ export function ProductCard({ product, showStock = false }: { product: Product; 
   const image = product.images[0];
 
   return (
-    <article className="card product-card" data-testid="product-card" data-slug={product.slug}>
+    <article className="product-card" data-testid="product-card" data-slug={product.slug}>
       <Link href={`/products/${product.slug}`}>
         <div className="product-thumb">
           {image ? (

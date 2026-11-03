@@ -77,6 +77,26 @@ test.describe('guest shopping flow', () => {
       .toBeGreaterThan(0);
   });
 
+  test('catalog cards line up and carry no frame', async ({ page }) => {
+    // The product card also had the generic `.card` class. That rule comes later
+    // in globals.css, so it beat `.product-card { border: none }` and drew a
+    // frame around every photo, and `.card + .card` pushed every card but the
+    // first 16px down, so the first card of the grid sat higher than its row.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/products');
+    const cards = page.getByTestId('product-card');
+    await expect(cards.nth(2)).toBeVisible();
+    const tops = await cards.evaluateAll((els) =>
+      els.slice(0, 3).map((el) => Math.round(el.getBoundingClientRect().top)),
+    );
+    expect(new Set(tops).size, `first-row card tops ${tops.join(', ')}`).toBe(1);
+    const frame = await cards.first().evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { border: style.borderTopWidth, padding: style.paddingTop };
+    });
+    expect(frame).toEqual({ border: '0px', padding: '0px' });
+  });
+
   test('a query that matches nothing shows an empty state, not an error', async ({ page }) => {
     await page.goto('/products?q=zzzznothingmatchesthis');
     await expect(page.getByTestId('no-results')).toBeVisible();
